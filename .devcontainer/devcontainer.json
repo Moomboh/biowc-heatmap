@@ -3,12 +3,17 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
+  "settings": {
+    "docker.showExplorer": false
+  },
   "containerUser": "node",
   "extensions": [
     "runem.lit-plugin",
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
-    "joshbolduc.commitlint"
+    "joshbolduc.commitlint",
+    "eamodio.gitlens",
+    "ms-azuretools.vscode-docker"
   ],
   "postCreateCommand": "npm install"
 }
