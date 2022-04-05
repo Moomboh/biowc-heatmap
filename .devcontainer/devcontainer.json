@@ -1,0 +1,13 @@
+{
+  "name": "advanced-heatmap dev",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "containerUser": "node",
+  "extensions": [
+    "runem.lit-plugin",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint"
+  ],
+  "postCreateCommand": "npm install"
+}
