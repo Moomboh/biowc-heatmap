@@ -5,13 +5,11 @@ export class BiowcHeatmap extends LitElement {
   static styles = css`
     :host {
       display: block;
-      padding: 25px;
-      color: var(--biowc-heatmap-text-color, #000);
     }
   `;
 
   @property({ type: String })
-  color: String = '#ff0000';
+  color: String = '#b40000';
 
   @property({ type: Number })
   gutter: number = 0.05;

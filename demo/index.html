@@ -6,10 +6,6 @@
     body {
       background: #fafafa;
     }
-
-    #demo {
-      max-width: 500px;
-    }
   </style>
 </head>
 <body>
@@ -18,11 +14,13 @@
   <script type="module">
     import { html, render } from 'lit';
     import '../dist/src/biowc-heatmap.js';
+    import { fetchDemoData } from '../dist/demo/app.js';
 
-    const data = [[0.1, 0.3, 0.5], [0.2, 1.0, 0.9], [0.4, 0.7, 0.2]]
+    const demoData = await fetchDemoData();
+
     render(
       html`
-        <biowc-heatmap .data=${data} />
+        <biowc-heatmap .data=${demoData.data} />
       `,
       document.querySelector('#demo')
     );
