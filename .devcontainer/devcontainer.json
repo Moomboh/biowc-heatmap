@@ -1,5 +1,5 @@
 {
-  "name": "advanced-heatmap dev",
+  "name": "biowc-heatmap dev",
   "build": {
     "dockerfile": "Dockerfile"
   },

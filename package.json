@@ -1,5 +1,5 @@
 {
-  "name": "advanced-heatmap",
+  "name": "biowc-heatmap",
   "description": "",
   "license": "MIT",
   "author": "Elias Kahl <contact@elias.works>",
@@ -8,7 +8,7 @@
   "module": "dist/src/index.js",
   "exports": {
     ".": "./dist/src/index.js",
-    "./advanced-heatmap.js": "./dist/src/advanced-heatmap.js"
+    "./biowc-heatmap.js": "./dist/src/biowc-heatmap.js"
   },
   "scripts": {
     "analyze": "cem analyze --litelement",

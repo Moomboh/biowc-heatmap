@@ -1,1 +1,1 @@
-export { AdvancedHeatmap } from './AdvancedHeatmap.js';
+export { BiowcHeatmap } from './BiowcHeatmap.js';

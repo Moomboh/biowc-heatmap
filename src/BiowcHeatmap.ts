@@ -1,12 +1,12 @@
 import { html, svg, css, LitElement } from 'lit';
 import { property } from 'lit/decorators.js';
 
-export class AdvancedHeatmap extends LitElement {
+export class BiowcHeatmap extends LitElement {
   static styles = css`
     :host {
       display: block;
       padding: 25px;
-      color: var(--advanced-heatmap-text-color, #000);
+      color: var(--biowc-heatmap-text-color, #000);
     }
   `;
 

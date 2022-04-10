@@ -1,5 +1,5 @@
 import { html, TemplateResult } from 'lit';
-import '../src/advanced-heatmap.js';
+import '../src/biowc-heatmap.js';
 
 const DEFAULT_DATA = [
   [0.1, 0.3, 0.5],
@@ -8,8 +8,8 @@ const DEFAULT_DATA = [
 ];
 
 export default {
-  title: 'AdvancedHeatmap',
-  component: 'advanced-heatmap',
+  title: 'BiowcHeatmap',
+  component: 'biowc-heatmap',
   argTypes: {
     data: { control: 'object', defaultValue: DEFAULT_DATA },
   },
@@ -26,7 +26,7 @@ interface ArgTypes {
 }
 
 const Template: Story<ArgTypes> = ({ data = DEFAULT_DATA }: ArgTypes) => html`
-  <advanced-heatmap style="max-width: 500px;" .data=${data}></advanced-heatmap>
+  <biowc-heatmap style="max-width: 500px;" .data=${data}></biowc-heatmap>
 `;
 
 export const Regular = Template.bind({});

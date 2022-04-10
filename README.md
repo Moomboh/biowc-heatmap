@@ -1,21 +1,21 @@
-# advanced-heatmap
+# biowc-heatmap
 
 This webcomponent follows the [open-wc](https://github.com/open-wc/open-wc) recommendation.
 
 ## Installation
 
 ```bash
-npm i advanced-heatmap
+npm i biowc-heatmap
 ```
 
 ## Usage
 
 ```html
 <script type="module">
-  import 'advanced-heatmap/advanced-heatmap.js';
+  import 'biowc-heatmap/biowc-heatmap.js';
 </script>
 
-<advanced-heatmap></advanced-heatmap>
+<biowc-heatmap></biowc-heatmap>
 ```
 
 ## Linting and formatting
@@ -59,7 +59,6 @@ To build a production version of Storybook, run
 ```bash
 npm run storybook:build
 ```
-
 
 ## Tooling configs
 
