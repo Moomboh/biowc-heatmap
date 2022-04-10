@@ -1,13 +1,17 @@
 import { html, TemplateResult } from 'lit';
 import '../src/advanced-heatmap.js';
 
+const DEFAULT_DATA = [
+  [0.1, 0.3, 0.5],
+  [0.2, 1.0, 0.9],
+  [0.4, 0.7, 0.2],
+];
+
 export default {
   title: 'AdvancedHeatmap',
   component: 'advanced-heatmap',
   argTypes: {
-    title: { control: 'text' },
-    counter: { control: 'number' },
-    textColor: { control: 'color' },
+    data: { control: 'object', defaultValue: DEFAULT_DATA },
   },
 };
 
@@ -18,43 +22,11 @@ interface Story<T> {
 }
 
 interface ArgTypes {
-  title?: string;
-  counter?: number;
-  textColor?: string;
-  slot?: TemplateResult;
+  data?: Array<Array<number>>;
 }
 
-const Template: Story<ArgTypes> = ({
-  title = 'Hello world',
-  counter = 5,
-  textColor,
-  slot,
-}: ArgTypes) => html`
-  <advanced-heatmap
-    style="--advanced-heatmap-text-color: ${textColor || 'black'}"
-    .title=${title}
-    .counter=${counter}
-  >
-    ${slot}
-  </advanced-heatmap>
+const Template: Story<ArgTypes> = ({ data = DEFAULT_DATA }: ArgTypes) => html`
+  <advanced-heatmap style="max-width: 500px;" .data=${data}></advanced-heatmap>
 `;
 
 export const Regular = Template.bind({});
-
-export const CustomTitle = Template.bind({});
-CustomTitle.args = {
-  title: 'My title',
-};
-
-export const CustomCounter = Template.bind({});
-CustomCounter.args = {
-  counter: 123456,
-};
-
-export const SlottedContent = Template.bind({});
-SlottedContent.args = {
-  slot: html`<p>Slotted content</p>`,
-};
-SlottedContent.argTypes = {
-  slot: { table: { disable: true } },
-};
