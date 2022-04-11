@@ -1,5 +1,6 @@
-import { svg, css, LitElement, SVGTemplateResult } from 'lit';
+import { svg, LitElement, SVGTemplateResult } from 'lit';
 import { property } from 'lit/decorators.js';
+import styles from './biowc-heatmap.css.js';
 
 export enum Side {
   top = 'top',
@@ -17,24 +18,7 @@ export type SideSizes = {
 };
 
 export class BiowcHeatmap extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-    }
-
-    .heatmap-background {
-      fill: var(--heatmap-background-color, rgba(1, 1, 1, 0));
-    }
-
-    .label-box {
-      fill: var(--label-background-color, rgba(1, 1, 1, 0));
-    }
-
-    .label-text {
-      fill: var(--label-text-color, #222222);
-      font-family: var(--label-text-font-family, sans-serif);
-    }
-  `;
+  static styles = styles;
 
   @property({ type: String })
   color: String = '#b40000';
