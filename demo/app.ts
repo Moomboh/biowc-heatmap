@@ -7,7 +7,7 @@ interface DemoData {
   yLabels: Array<String>;
 }
 
-function getColumnLabels(prdbData: any): Array<String> {
+function getRowLabels(prdbData: any): Array<String> {
   function getLabel(proteinId: String): String {
     const protein = prdbData.proteindata.filter(
       (proteinData: any[]) => proteinData[0] === proteinId
@@ -20,7 +20,7 @@ function getColumnLabels(prdbData: any): Array<String> {
   );
 }
 
-function getRowLabels(prdbData: any): Array<String> {
+function getColumnLabels(prdbData: any): Array<String> {
   function getLabel(tissueId: String): String {
     const tissue = prdbData.tissuedata.filter(
       (tissueData: any[]) => tissueData[0] === tissueId
@@ -59,8 +59,8 @@ export async function fetchDemoData(): Promise<DemoData> {
   const response = await fetch(PRDB_DATA_URL);
   const prdbData = await response.json();
 
-  const xLabels = getColumnLabels(prdbData);
   const yLabels = getRowLabels(prdbData);
+  const xLabels = getColumnLabels(prdbData);
   const data = getData(prdbData);
 
   return {

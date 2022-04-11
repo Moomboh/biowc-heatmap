@@ -6,6 +6,16 @@
     body {
       background: #fafafa;
     }
+
+    #demo {
+      max-width: 70vw;
+      margin: auto;
+    }
+
+    biowc-heatmap {
+      --label-background-color: #f4f4f4;
+      --heatmap-background-color: #f4f4f4;
+    }
   </style>
 </head>
 <body>
@@ -17,10 +27,26 @@
     import { fetchDemoData } from '../dist/demo/app.js';
 
     const demoData = await fetchDemoData();
+    
+    console.log(demoData)
 
     render(
       html`
-        <biowc-heatmap .data=${demoData.data} />
+        <biowc-heatmap
+          .data=${demoData.data}
+          .labels=${{
+            top: demoData.xLabels,
+            left: demoData.yLabels,
+            right: demoData.yLabels,
+            bottom: demoData.xLabels,
+          }}
+          .labelSizes=${{
+            top: 0.24,
+            left: 0.08,
+            right: 0.08,
+            bottom: 0.24,
+          }}
+        ></biowc-heatmap>
       `,
       document.querySelector('#demo')
     );
