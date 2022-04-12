@@ -19,4 +19,8 @@ export default css`
     font-family: var(--label-text-font-family, sans-serif);
 }
 
+.scrollbar {
+    fill: var(--scrollbar-color, rgba(0.8, 0.8, 0.8, 0.5));
+}
+
 `;

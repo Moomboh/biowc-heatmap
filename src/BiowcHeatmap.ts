@@ -13,8 +13,12 @@ export type Labels = {
   [key in Side]?: string[];
 };
 
-export type SideSizes = {
+export type SideNumbers = {
   [key in Side]: number;
+};
+
+export type SideBooleans = {
+  [key in Side]: boolean;
 };
 
 export class BiowcHeatmap extends LitElement {
@@ -24,7 +28,13 @@ export class BiowcHeatmap extends LitElement {
   color: String = '#b40000';
 
   @property({ type: Number })
-  gutter: number = 0.05;
+  gutter: number = 0.02;
+
+  @property({ type: Number })
+  scrollbarWidth: number = 0.5;
+
+  @property({ type: Number })
+  maxZoom: number = 10;
 
   @property({ attribute: false })
   data: number[][] = [];
@@ -33,7 +43,7 @@ export class BiowcHeatmap extends LitElement {
   labels: Labels = {};
 
   @property({ attribute: false })
-  labelSizes: SideSizes = {
+  labelSizes: SideNumbers = {
     top: 0.1,
     left: 0.1,
     right: 0.1,
@@ -41,18 +51,103 @@ export class BiowcHeatmap extends LitElement {
   };
 
   @property({ attribute: false })
-  heatmapMargins: SideSizes = {
-    top: 0.5,
-    left: 0.5,
-    right: 0.5,
-    bottom: 0.5,
+  heatmapMargins: SideNumbers = {
+    top: 1,
+    left: 1,
+    right: 1,
+    bottom: 1,
   };
-
-  _zoom: number = 1;
 
   constructor() {
     super();
     this.addEventListener('wheel', this._onWheel);
+    document.addEventListener('mouseup', this._onMouseUp.bind(this));
+    document.addEventListener('mousemove', this._onMouseMove.bind(this));
+  }
+
+  updated() {
+    this._validateProps();
+  }
+
+  render(): SVGTemplateResult {
+    return svg`
+      <svg
+        version="1.1"
+        viewBox="0 0 ${this._viewboxWidth} ${this._viewboxHeight}"
+      >
+        ${this._renderLabels(Side.top)}
+        ${this._renderLabels(Side.left)}
+        ${this._renderHeatmap()}
+        ${this._renderYscrollbar()}
+        ${this._renderLabels(Side.right)}
+        ${this._renderXscrollbar()}
+        ${this._renderLabels(Side.bottom)}
+      </svg>
+    `;
+  }
+
+  set zoom(value: number) {
+    this._zoom = Math.min(Math.max(1, value), this.maxZoom);
+    this._enforceScrollColBoundary();
+    this._enforceScrollRowBoundary();
+    this.requestUpdate();
+  }
+
+  get zoom(): number {
+    return this._zoom;
+  }
+
+  set scrollCol(value: number) {
+    this._scrollCol = value;
+    this._enforceScrollColBoundary();
+    this.requestUpdate();
+  }
+
+  get scrollCol(): number {
+    return this._scrollCol;
+  }
+
+  set scrollRow(value: number) {
+    this._scrollRow = value;
+    this._enforceScrollRowBoundary();
+    this.requestUpdate();
+  }
+
+  get scrollRow(): number {
+    return this._scrollRow;
+  }
+
+  scrollToRow(row: number): void {
+    this.scrollRow = row - this._zoomYoffset;
+  }
+
+  scrollToCol(col: number): void {
+    this.scrollCol = col - this._zoomXoffset;
+  }
+
+  scrollToCell(row: number, col: number): void {
+    this.scrollToRow(row);
+    this.scrollToCol(col);
+  }
+
+  _zoom: number = 1;
+
+  _scrollCol: number = 0;
+
+  _scrollRow: number = 0;
+
+  _draggingHeatmap: boolean = false;
+
+  _dragginScrollbarX: boolean = false;
+
+  _dragginScrollbarY: boolean = false;
+
+  get _dragging(): boolean {
+    return (
+      this._draggingHeatmap ||
+      this._dragginScrollbarX ||
+      this._dragginScrollbarY
+    );
   }
 
   get _nRows(): number {
@@ -66,12 +161,85 @@ export class BiowcHeatmap extends LitElement {
     return this.data[0].length;
   }
 
-  get _zoomXoffset() {
-    return -(this._nCols / 2) * (1 - 1 / this._zoom);
+  get _zoomXoffset(): number {
+    return (this._nCols / 2) * (1 - 1 / this._zoom);
   }
 
-  get _zoomYoffset() {
-    return -(this._nRows / 2) * (1 - 1 / this._zoom);
+  get _scrollXoffset() {
+    return this._zoomXoffset + this._scrollCol;
+  }
+
+  get _zoomYoffset(): number {
+    return (this._nRows / 2) * (1 - 1 / this._zoom);
+  }
+
+  get _scrollYoffset() {
+    return this._zoomYoffset + this._scrollRow;
+  }
+
+  get _scrollbarYwidth(): number {
+    return this.scrollbarWidth;
+  }
+
+  get _scrollbarYheight(): number {
+    return this._nRows * (1 / this._zoom);
+  }
+
+  get _scrollbarYxoffset(): number {
+    return (
+      this._heatmapXoffset +
+      this._nCols +
+      (this.heatmapMargins.right - this.scrollbarWidth) / 2
+    );
+  }
+
+  get _scrollbarYyoffset(): number {
+    return this._heatmapYoffset + this._scrollYoffset;
+  }
+
+  get _scrollbarXwidth(): number {
+    return this._nCols * (1 / this._zoom);
+  }
+
+  get _scrollbarXheight(): number {
+    return this.scrollbarWidth;
+  }
+
+  get _scrollbarXxoffset(): number {
+    return this._heatmapXoffset + this._scrollXoffset;
+  }
+
+  get _scrollbarXyoffset(): number {
+    return (
+      this._heatmapYoffset +
+      this._nRows +
+      (this.heatmapMargins.bottom - this.scrollbarWidth) / 2
+    );
+  }
+
+  get _scrollDeltaXScale(): number {
+    return (1 / this.clientWidth) * (this._nCols + this._scrollbarXwidth);
+  }
+
+  get _scrollDeltaYScale(): number {
+    return (1 / this.clientHeight) * (this._nRows + this._scrollbarYheight);
+  }
+
+  get _dragDeltaXScale(): number {
+    return this._scrollDeltaXScale * (1 / this._zoom);
+  }
+
+  get _dragDeltaYScale(): number {
+    return this._scrollDeltaYScale * (1 / this._zoom);
+  }
+
+  get _zoomDeltaScale(): number {
+    return (
+      Math.min(
+        (1 / this.clientWidth) * this._nCols,
+        (1 / this.clientHeight) * this._nRows
+      ) * 0.1
+    );
   }
 
   get _viewboxWidth(): number {
@@ -206,19 +374,74 @@ export class BiowcHeatmap extends LitElement {
     return 0;
   }
 
-  _onWheel(event: WheelEvent) {
-    if (event.ctrlKey === true) {
+  _enforceScrollColBoundary() {
+    this._scrollCol = Math.min(
+      Math.max(-this._zoomXoffset, this._scrollCol),
+      this._zoomXoffset
+    );
+  }
+
+  _enforceScrollRowBoundary() {
+    this._scrollRow = Math.min(
+      Math.max(-this._zoomYoffset, this._scrollRow),
+      this._zoomYoffset
+    );
+  }
+
+  _onMouseUp(event: MouseEvent): void {
+    if (event.button === 0) {
+      this._draggingHeatmap = false;
+      this._dragginScrollbarX = false;
+      this._dragginScrollbarY = false;
+    }
+  }
+
+  _onMouseMove(event: MouseEvent): void {
+    if (this._dragging) {
       event.preventDefault();
+    }
 
-      const maxZoom = 4;
-      const scale = 0.001;
-      const delta = event.deltaY;
+    if (this._draggingHeatmap) {
+      this.scrollRow += -event.movementY * this._dragDeltaYScale;
+      this.scrollCol += -event.movementX * this._dragDeltaYScale;
+    }
 
-      this._zoom += delta * -scale;
+    if (this._dragginScrollbarX) {
+      this.scrollCol += event.movementX * this._scrollDeltaXScale;
+    }
 
-      this._zoom = Math.min(Math.max(1, this._zoom), maxZoom);
+    if (this._dragginScrollbarY) {
+      this.scrollRow += event.movementY * this._scrollDeltaYScale;
+    }
+  }
 
-      this.requestUpdate();
+  _onHeatmapMouseDown(event: MouseEvent) {
+    if (event.button === 0) {
+      this._draggingHeatmap = true;
+    }
+  }
+
+  _onScrollbarXMouseDown(event: MouseEvent) {
+    if (event.button === 0) {
+      this._dragginScrollbarX = true;
+    }
+  }
+
+  _onScrollbarYMouseDown(event: MouseEvent) {
+    if (event.button === 0) {
+      this._dragginScrollbarY = true;
+    }
+  }
+
+  _onWheel(event: WheelEvent) {
+    event.preventDefault();
+
+    if (event.ctrlKey === true) {
+      this.zoom += event.deltaY * -this._zoomDeltaScale;
+    } else if (event.shiftKey === true) {
+      this.scrollCol += event.deltaY * this._dragDeltaYScale;
+    } else {
+      this.scrollRow += event.deltaY * this._dragDeltaXScale;
     }
   }
 
@@ -241,11 +464,7 @@ export class BiowcHeatmap extends LitElement {
     }
   }
 
-  updated() {
-    this._validateProps();
-  }
-
-  renderHeatmapCell(x: number, y: number, value: number): SVGTemplateResult {
+  _renderHeatmapCell(x: number, y: number, value: number): SVGTemplateResult {
     return svg`
       <rect
         x="${x}"
@@ -257,18 +476,20 @@ export class BiowcHeatmap extends LitElement {
     `;
   }
 
-  renderHeatmapRow(row: Array<number>, y: number): SVGTemplateResult {
-    return svg`${row.map((value, x) => this.renderHeatmapCell(x, y, value))}`;
+  _renderHeatmapRow(row: Array<number>, y: number): SVGTemplateResult {
+    return svg`${row.map((value, x) => this._renderHeatmapCell(x, y, value))}`;
   }
 
-  renderHeatmap(): SVGTemplateResult {
+  _renderHeatmap(): SVGTemplateResult {
     return svg`
       <svg
         x="${this._heatmapXoffset}"
         y="${this._heatmapYoffset}"
         width="${this._nCols}"
         height="${this._nRows}"
+        draggable="true"
         class="heatmap"
+        @mousedown="${this._onHeatmapMouseDown}"
       >
         <rect
           x="0"
@@ -280,16 +501,16 @@ export class BiowcHeatmap extends LitElement {
         <g
           transform="
             scale(${this._zoom})
-            translate(${this._zoomXoffset}, ${this._zoomYoffset})
+            translate(${-this._scrollXoffset}, ${-this._scrollYoffset})
           "
         >
-          ${this.data.map((row, i) => this.renderHeatmapRow(row, i))}
+          ${this.data.map((row, i) => this._renderHeatmapRow(row, i))}
         </g>
       </svg>
     `;
   }
 
-  renderLabels(side: Side): SVGTemplateResult {
+  _renderLabels(side: Side): SVGTemplateResult {
     const rotation = (s: Side): number => {
       if (s === Side.top || s === Side.bottom) {
         return -90;
@@ -350,7 +571,7 @@ export class BiowcHeatmap extends LitElement {
         return 0;
       }
 
-      return this._zoomXoffset;
+      return -this._scrollXoffset;
     };
 
     const zoomYoffset = (s: Side): number => {
@@ -362,7 +583,7 @@ export class BiowcHeatmap extends LitElement {
         return 0;
       }
 
-      return this._zoomYoffset;
+      return -this._scrollYoffset;
     };
 
     if (this._hasLabels(side)) {
@@ -418,18 +639,43 @@ export class BiowcHeatmap extends LitElement {
     return svg``;
   }
 
-  render(): SVGTemplateResult {
-    return svg`
-      <svg
-        version="1.1"
-        viewBox="0 0 ${this._viewboxWidth} ${this._viewboxHeight}"
-      >
-        ${this.renderLabels(Side.top)}
-        ${this.renderLabels(Side.left)}
-        ${this.renderHeatmap()}
-        ${this.renderLabels(Side.right)}
-        ${this.renderLabels(Side.bottom)}
-      </svg>
-    `;
+  _renderYscrollbar(): SVGTemplateResult {
+    if (this._zoom > 1) {
+      return svg`
+        <rect
+          x="${this._scrollbarYxoffset}"
+          y="${this._scrollbarYyoffset}"
+          rx="${this._scrollbarYwidth / 2}"
+          width="${this._scrollbarYwidth}"
+          height="${this._scrollbarYheight}"
+          class="scrollbar scrollbar-y"
+          @mousedown="${this._onScrollbarYMouseDown}"
+        />
+      `;
+    }
+    return svg``;
+  }
+
+  _renderXscrollbar(): SVGTemplateResult {
+    if (this._zoom > 1) {
+      return svg`
+        <svg 
+          x="${this._scrollbarXxoffset}"
+          y="${this._scrollbarXyoffset}"
+          ry="${this._scrollbarXheight / 2}"
+          width="${this._scrollbarXwidth}"
+          height="${this._scrollbarXheight}"
+          class="scrollbar scrollbar-x"
+          @mousedown="${this._onScrollbarXMouseDown}"
+        >
+          <rect
+            ry="${this._scrollbarXheight / 2}"
+            width="${this._scrollbarXwidth}"
+            height="${this._scrollbarXheight}"
+          />
+        </svg>
+      `;
+    }
+    return svg``;
   }
 }

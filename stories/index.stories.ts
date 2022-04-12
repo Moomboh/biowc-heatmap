@@ -1,6 +1,6 @@
 import { html, TemplateResult } from 'lit';
 import '../src/biowc-heatmap.js';
-import { Labels, Side, SideSizes } from '../src/BiowcHeatmap.js';
+import { Labels, Side, SideNumbers } from '../src/BiowcHeatmap.js';
 
 const DEFAULT_DATA_SIZE = 10;
 
@@ -24,7 +24,7 @@ const DEFAULT_LABEL_SIZES = {
   [Side.left]: 0.3,
   [Side.right]: 0.3,
   [Side.bottom]: 0.3,
-} as SideSizes;
+} as SideNumbers;
 
 export default {
   title: 'BiowcHeatmap',
@@ -45,7 +45,7 @@ interface Story<T> {
 interface ArgTypes {
   data: number[][];
   labels?: Labels;
-  labelSizes?: SideSizes;
+  labelSizes?: SideNumbers;
 }
 
 const Template: Story<ArgTypes> = ({

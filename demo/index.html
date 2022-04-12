@@ -8,7 +8,8 @@
     }
 
     #demo {
-      max-width: 70vw;
+      max-width: 60vw;
+      max-height: 60vh;
       margin: auto;
     }
 
@@ -19,6 +20,12 @@
   </style>
 </head>
 <body>
+  <button id="zoom-in">zoom +</button>
+  <button id="zoom-out">zoom -</button>
+  <button id="scrollto-center">scroll to center</button>
+  <button id="scrollto-start">scroll to start</button>
+  <button id="scrollto-end">scroll to end</button>
+
   <div id="demo"></div>
 
   <script type="module">
@@ -27,8 +34,6 @@
     import { fetchDemoData } from '../dist/demo/app.js';
 
     const demoData = await fetchDemoData();
-    
-    console.log(demoData)
 
     render(
       html`
@@ -41,15 +46,49 @@
             bottom: demoData.xLabels,
           }}
           .labelSizes=${{
-            top: 0.24,
-            left: 0.08,
-            right: 0.08,
-            bottom: 0.24,
+            top: 0.3,
+            left: 0.1,
+            right: 0.1,
+            bottom: 0.3,
           }}
         ></biowc-heatmap>
       `,
       document.querySelector('#demo')
     );
+
+    const heatmap = document.querySelector('biowc-heatmap');
+    const zoomInButton = document.querySelector('#zoom-in');
+    const zoomOutButton = document.querySelector('#zoom-out');
+    const scrollToCenterButton = document.querySelector('#scrollto-center');
+    const scrollToStartButton = document.querySelector('#scrollto-start');
+    const scrollToEndButton = document.querySelector('#scrollto-end');
+
+    zoomInButton.addEventListener('click', () => {
+      heatmap.zoom += 0.5;
+    });
+
+    zoomOutButton.addEventListener('click', () => {
+      heatmap.zoom -= 0.5;
+    });
+
+    scrollToCenterButton.addEventListener('click', () => {
+      heatmap.scrollToCell(
+        Math.floor(heatmap.data.length / 2),
+        Math.floor(heatmap.data[0].length / 2)
+      );
+    });
+
+    scrollToStartButton.addEventListener('click', () => {
+      heatmap.scrollToCell(0, 0);
+    });
+
+    scrollToEndButton.addEventListener('click', () => {
+      heatmap.scrollToCell(
+        heatmap.data.length - 1,
+        heatmap.data[0].length - 1
+      );
+    });
+
   </script>
 </body>
 </html>
