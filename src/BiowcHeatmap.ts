@@ -9,16 +9,73 @@ export enum Side {
   bottom = 'bottom',
 }
 
-export type Labels = {
-  [key in Side]?: string[];
-};
-
 export type SideNumbers = {
   [key in Side]: number;
 };
 
 export type SideBooleans = {
   [key in Side]: boolean;
+};
+
+export type Labels = {
+  [key in Side]?: string[];
+};
+
+export interface DendrogramNode {
+  id: number;
+  left: DendrogramNode | number;
+  right: DendrogramNode | number;
+  height: number;
+  center?: number;
+}
+
+export type Dendrograms = {
+  [key in Side]?: DendrogramNode;
+};
+
+function calcDendrogramCenters(node: DendrogramNode): DendrogramNode {
+  if (typeof node.left === 'number' && typeof node.right === 'number') {
+    return {
+      ...node,
+      center: (node.left + node.right) / 2,
+    };
+  }
+
+  if (typeof node.left !== 'number' && typeof node.right === 'number') {
+    const left = calcDendrogramCenters(node.left);
+    return {
+      ...node,
+      left,
+      center: ((left.center as number) + node.right) / 2,
+    };
+  }
+
+  if (typeof node.left === 'number' && typeof node.right !== 'number') {
+    const right = calcDendrogramCenters(node.right);
+    return {
+      ...node,
+      right,
+      center: (node.left + (right.center as number)) / 2,
+    };
+  }
+
+  if (typeof node.left !== 'number' && typeof node.right !== 'number') {
+    const left = calcDendrogramCenters(node.left);
+    const right = calcDendrogramCenters(node.right);
+    return {
+      ...node,
+      left,
+      right,
+      center: ((left.center as number) + (right.center as number)) / 2,
+    };
+  }
+
+  throw new Error('Invalid dendrogram node');
+}
+
+export type DendrogramLine = {
+  from: [number, number];
+  to: [number, number];
 };
 
 export class BiowcHeatmap extends LitElement {
@@ -58,6 +115,17 @@ export class BiowcHeatmap extends LitElement {
     bottom: 1,
   };
 
+  @property({ attribute: false })
+  dendrograms: Dendrograms = {};
+
+  @property({ attribute: false })
+  dendrogramSizes: SideNumbers = {
+    top: 0.2,
+    left: 0.2,
+    right: 0.2,
+    bottom: 0.2,
+  };
+
   constructor() {
     super();
     this.addEventListener('wheel', this._onWheel);
@@ -76,6 +144,7 @@ export class BiowcHeatmap extends LitElement {
         viewBox="0 0 ${this._viewboxWidth} ${this._viewboxHeight}"
       >
         ${this._renderLabels(Side.top)}
+        ${this._renderDendrogram(Side.left)}
         ${this._renderLabels(Side.left)}
         ${this._renderHeatmap()}
         ${this._renderYscrollbar()}
@@ -251,6 +320,10 @@ export class BiowcHeatmap extends LitElement {
       if (this._hasLabels(side)) {
         width += this._labelSize(side);
       }
+
+      if (this._hasDendrogram(side)) {
+        width += this._dendrogramSize(side);
+      }
     }
 
     return width;
@@ -264,6 +337,10 @@ export class BiowcHeatmap extends LitElement {
     for (const side of [Side.top, Side.bottom]) {
       if (this._hasLabels(side)) {
         height += this._labelSize(side);
+      }
+
+      if (this._hasDendrogram(side)) {
+        height += this._dendrogramSize(side);
       }
     }
 
@@ -279,6 +356,10 @@ export class BiowcHeatmap extends LitElement {
       xoffset += this._labelSize(Side.left);
     }
 
+    if (this._hasDendrogram(Side.left)) {
+      xoffset += this._dendrogramSize(Side.left);
+    }
+
     return xoffset;
   }
 
@@ -291,12 +372,22 @@ export class BiowcHeatmap extends LitElement {
       yoffset += this._labelSize(Side.top);
     }
 
+    if (this._hasDendrogram(Side.top)) {
+      yoffset += this._labelSize(Side.top);
+    }
+
     return yoffset;
   }
 
   _labelsXoffset(side: Side): number {
     if (side === Side.left) {
-      return 0;
+      let xoffset = 0;
+
+      if (this._hasDendrogram(Side.left)) {
+        xoffset += this._labelSize(Side.left);
+      }
+
+      return xoffset;
     }
 
     if (side === Side.right) {
@@ -312,6 +403,10 @@ export class BiowcHeatmap extends LitElement {
       let xoffset = this.heatmapMargins.left;
 
       if (this._hasLabels(Side.left)) {
+        xoffset += this._labelSize(Side.left);
+      }
+
+      if (this._hasDendrogram(Side.left)) {
         xoffset += this._labelSize(Side.left);
       }
 
@@ -342,10 +437,42 @@ export class BiowcHeatmap extends LitElement {
         yoffset += this._labelSize(Side.top);
       }
 
+      if (this._hasDendrogram(Side.top)) {
+        yoffset += this._labelSize(Side.top);
+      }
+
       return yoffset;
     }
 
     return 0;
+  }
+
+  _dendrogramXoffset(side: Side): number {
+    if (side === Side.right) {
+      let xoffset = this._labelsXoffset(side);
+
+      if (this._hasLabels(Side.right)) {
+        xoffset += this._labelSize(Side.right);
+      }
+
+      return xoffset;
+    }
+
+    return this._labelsXoffset(side) - this._labelSize(side);
+  }
+
+  _dendrogramYoffset(side: Side): number {
+    if (side === Side.right) {
+      let yoffset = this._labelsYoffset(side);
+
+      if (this._hasLabels(Side.right)) {
+        yoffset += this._labelSize(Side.right);
+      }
+
+      return yoffset;
+    }
+
+    return this._labelsYoffset(side);
   }
 
   _hasLabels(side: Side): boolean {
@@ -362,6 +489,10 @@ export class BiowcHeatmap extends LitElement {
     return false;
   }
 
+  _hasDendrogram(side: Side): boolean {
+    return this.dendrograms[side] !== undefined;
+  }
+
   _labelSize(side: Side): number {
     if (side === Side.top || side === Side.bottom) {
       return this.labelSizes[side] * this._nRows;
@@ -369,6 +500,18 @@ export class BiowcHeatmap extends LitElement {
 
     if (side === Side.left || side === Side.right) {
       return this.labelSizes[side] * this._nCols;
+    }
+
+    return 0;
+  }
+
+  _dendrogramSize(side: Side): number {
+    if (side === Side.top || side === Side.bottom) {
+      return this.dendrogramSizes[side] * this._nRows;
+    }
+
+    if (side === Side.left || side === Side.right) {
+      return this.dendrogramSizes[side] * this._nCols;
     }
 
     return 0;
@@ -676,6 +819,157 @@ export class BiowcHeatmap extends LitElement {
         </svg>
       `;
     }
+    return svg``;
+  }
+
+  _renderDendrogram(side: Side): SVGTemplateResult {
+    const dendrogram = calcDendrogramCenters(
+      this.dendrograms[side] as DendrogramNode
+    );
+
+    // TODO: ensure bottom and right dendrograms are correctly rotated and offset
+    const rotation = (s: Side): number => {
+      if (s === Side.left) {
+        return 0;
+      }
+
+      if (s === Side.right) {
+        return 90;
+      }
+
+      if (s === Side.bottom) {
+        return 180;
+      }
+
+      return 0;
+    };
+
+    const width = (s: Side): number => {
+      if (s === Side.left || s === Side.right) {
+        return this._dendrogramSize(s);
+      }
+
+      return this._nCols;
+    };
+
+    const height = (s: Side): number => {
+      if (s === Side.top || s === Side.bottom) {
+        return this._dendrogramSize(s);
+      }
+
+      return this._nRows;
+    };
+
+    const zoomLabelSizeoffset =
+      -this._dendrogramSize(side) * (1 - 1 / this._zoom);
+
+    const zoomXoffset = (s: Side): number => {
+      if (s === Side.left) {
+        return zoomLabelSizeoffset;
+      }
+
+      if (s === Side.right) {
+        return 0;
+      }
+
+      return -this._scrollXoffset;
+    };
+
+    const zoomYoffset = (s: Side): number => {
+      if (s === Side.top) {
+        return zoomLabelSizeoffset;
+      }
+
+      if (s === Side.bottom) {
+        return 0;
+      }
+
+      return -this._scrollYoffset;
+    };
+
+    const calcDendrogramLines = (): DendrogramLine[] => {
+      const lines: DendrogramLine[] = [];
+      const dendrogramHeight = dendrogram.height;
+
+      const stack: DendrogramNode[] = [dendrogram];
+
+      while (stack.length > 0) {
+        const node = stack.pop() as DendrogramNode;
+
+        if (typeof node.left !== 'number') {
+          stack.push(node.left);
+        }
+
+        if (typeof node.right !== 'number') {
+          stack.push(node.right);
+        }
+
+        if (typeof node.left === 'number' && typeof node.right === 'number') {
+          const x1 = node.left;
+          const x2 = node.right;
+          const y1 =
+            (node.height / dendrogramHeight) * this._dendrogramSize(side);
+          const y2 =
+            (node.height / dendrogramHeight) * this._dendrogramSize(side);
+
+          lines.push({ from: [x1, y1], to: [x2, y2] });
+        }
+
+        if (typeof node.left !== 'number' && typeof node.right === 'number') {
+          const x1 = node.left.center ?? -1;
+          const x2 = node.right;
+          const y1 =
+            (node.height / dendrogramHeight) * this._dendrogramSize(side);
+          const y2 =
+            (node.height / dendrogramHeight) * this._dendrogramSize(side);
+
+          lines.push({ from: [x1, y1], to: [x2, y2] });
+        }
+      }
+
+      return lines;
+    };
+
+    if (this._hasDendrogram(side)) {
+      const dendrogramLines = calcDendrogramLines();
+      return svg`
+        <svg
+          x="${this._dendrogramXoffset(side)}"
+          y="${this._dendrogramYoffset(side)}"
+          width="${width(side)}"
+          height="${height(side)}"
+          class="dendrogram-${side}"
+        >
+          <g
+            transform="
+              scale(${this._zoom})
+              translate(${zoomXoffset(side)}, ${zoomYoffset(side)})
+            "
+          >
+            <g
+              transform="
+                rotate(${rotation(side)})
+              "
+            >
+            ${dendrogramLines.map(
+              line =>
+                svg`
+                <line
+                  x1="${line.from[0]}"
+                  y1="${line.from[1]}"
+                  x2="${line.to[0]}"
+                  y2="${line.to[1]}"
+                  stroke="black"
+                  stroke-width="0.05"
+                />
+              `
+            )}
+            </g>
+          </g>
+        </svg>
+        `;
+    }
+
     return svg``;
   }
 }
