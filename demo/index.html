@@ -8,14 +8,15 @@
     }
 
     #demo {
-      max-width: 60vw;
-      max-height: 60vh;
+      max-width: 90vw;
+      max-height: 90vh;
       margin: auto;
     }
 
     biowc-heatmap {
       --label-background-color: #f4f4f4;
       --heatmap-background-color: #f4f4f4;
+      width: 90vw;
     }
   </style>
 </head>
@@ -44,12 +45,6 @@
             left: demoData.yLabels,
             right: demoData.yLabels,
             bottom: demoData.xLabels,
-          }}
-          .labelSizes=${{
-            top: 0.3,
-            left: 0.1,
-            right: 0.1,
-            bottom: 0.3,
           }}
         ></biowc-heatmap>
       `,
