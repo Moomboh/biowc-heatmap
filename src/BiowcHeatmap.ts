@@ -4,7 +4,10 @@ import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 import styles from './biowc-heatmap.css.js';
 import { BiowcHeatmapHeatmap } from './BiowcHeatmapHeatmap.js';
 import { BiowcHeatmapLabels, TextAlign } from './BiowcHeatmapLabels.js';
-import { BiowcHeatmapDendrogram } from './BiowcHeatmapDendrogram.js';
+import {
+  BiowcHeatmapDendrogram,
+  DendrogramNode,
+} from './BiowcHeatmapDendrogram.js';
 
 export enum Side {
   top = 'top',
@@ -15,6 +18,10 @@ export enum Side {
 
 export type Labels = {
   [key in Side]?: string[];
+};
+
+export type Dendrograms = {
+  [key in Side]?: DendrogramNode;
 };
 
 export type SideNumbers = {
@@ -50,14 +57,17 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   @property({ type: Number })
   gutter: number = 0.02;
 
+  @property({ type: Number })
+  zoom = 1;
+
   @property({ attribute: false })
   data: number[][] = [];
 
   @property({ attribute: false })
   labels: Labels = {};
 
-  @property({ type: Number })
-  zoom = 1;
+  @property({ attribute: false })
+  dendrograms: Dendrograms = {};
 
   @query('.heatmap')
   private _heatmapWrapperElement: HTMLElement | undefined;
@@ -76,6 +86,31 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   render(): HTMLTemplateResult {
     this._setComputedStyles();
 
+    return html`
+      ${this._renderHeatmap()}
+      ${this._renderSideLabels()}
+      ${this._renderDendrograms()}
+    `;
+  }
+
+  private _renderHeatmap(): HTMLTemplateResult {
+    return html`
+      <div 
+        class="heatmap"
+        @scroll="${this._onHeatmapScroll}"
+          style="padding-top: calc(${this._nRows} / ${this._nCols} * 100%);"
+      >
+        <biowc-heatmap-heatmap
+          .data=${this.data}
+          .gutter=${this.gutter}
+          .color=${this.color}
+          style="width: ${this.zoom * 100}%"
+        ></biowc-heatmap-heatmap>
+      </div>
+    `;
+  }
+
+  private _renderSideLabels(): HTMLTemplateResult {
     return html`
       ${Object.values(Side).map(side => {
         if (!this._hasSideLabels[side]) {
@@ -101,48 +136,68 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
             .labels=${this.labels[side]}
             ?horizontal=${horizontal}
             textalign=${BiowcHeatmap.sideToTextAlign(side)}
-            style="${
-              horizontal
-                ? `width: ${this.zoom * 100}%`
-                : // TODO: fix labels and heatmap height differing
-                  // this is a dirty fix trying to scale it to the heatmap by setting
-                  // an empirical determined scaling
-                  `height: ${this.zoom > 1 ? this.zoom * 101.5 : 100}%`
-            }"
+            style="${horizontal ? 'width' : 'height'}: ${this.zoom * 100}%"
           ></biowc-heatmap-labels>
         </div>
         `;
       })}
-
-      <div 
-        class="heatmap"
-        @scroll="${this._onHeatmapScroll}"
-          style="padding-top: calc(${this._nRows} / ${this._nCols} * 100%);"
-      >
-        <biowc-heatmap-heatmap
-          .data=${this.data}
-          .gutter=${this.gutter}
-          .color=${this.color}
-          style="width: ${this.zoom * 100}%"
-        ></biowc-heatmap-heatmap>
-      </div>
     `;
   }
 
-  get _nRows(): number {
+  private _renderDendrograms(): HTMLTemplateResult {
+    return html`
+      ${Object.values(Side).map(side => {
+        if (!this._hasSideDendrogram[side]) {
+          return html``;
+        }
+
+        const horizontal = side === Side.top || side === Side.bottom;
+
+        let scrollBarsStyle = '';
+        if (this.zoom > 1) {
+          scrollBarsStyle = horizontal
+            ? 'overflow-y: scroll'
+            : 'overflow-x: scroll';
+        }
+
+        return html`
+        <div
+          .scrollLeft=${horizontal ? this._scrollLeft : 0}
+          .scrollTop=${!horizontal ? this._scrollTop : 0}
+          style=${scrollBarsStyle}
+          class="dendrogram dendrogram-${side}"
+        >
+          <biowc-heatmap-dendrogram
+            .dendrogram=${this.dendrograms[side]}
+            .side=${side}
+            style="${horizontal ? 'width' : 'height'}: ${this.zoom * 100}%"
+          ></biowc-heatmap-dendrogram>
+        </div>
+        `;
+      })}
+    `;
+  }
+
+  private get _nRows(): number {
     return this.data.length;
   }
 
-  get _nCols(): number {
+  private get _nCols(): number {
     if (this._nRows === 0) {
       return 0;
     }
     return this.data[0].length;
   }
 
-  get _hasSideLabels() {
+  private get _hasSideLabels() {
     return Object.fromEntries(
       Object.values(Side).map(side => [side, !!this.labels[side]])
+    );
+  }
+
+  private get _hasSideDendrogram() {
+    return Object.fromEntries(
+      Object.values(Side).map(side => [side, !!this.dendrograms[side]])
     );
   }
 

@@ -9,8 +9,8 @@
 
     #demo {
       max-width: 90vw;
-      max-height: 90vh;
       margin: auto;
+      padding: 5vh 0;
     }
 
     biowc-heatmap {
@@ -45,6 +45,12 @@
             left: demoData.yLabels,
             right: demoData.yLabels,
             bottom: demoData.xLabels,
+          }}
+          .dendrograms=${{
+            top: demoData.xDendrogram,
+            left: demoData.yDendrogram,
+            right: demoData.yDendrogram,
+            bottom: demoData.xDendrogram,
           }}
         ></biowc-heatmap>
       `,
