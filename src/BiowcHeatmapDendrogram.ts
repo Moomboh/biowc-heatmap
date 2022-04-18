@@ -185,12 +185,15 @@ export class BiowcHeatmapDendrogram extends LitElement {
       const width = vertical ? this._dendrogramHeight : this._dendrogramWidth;
       const height = vertical ? this._dendrogramWidth : this._dendrogramHeight;
 
+      const xPadding = vertical ? width * 0.05 : 0;
+      const yPadding = vertical ? 0 : height * 0.05;
+
       return svg`
         <svg
           version="1.1"
           width="100%"
           height="100%"
-          viewBox="0 0 ${width} ${height}"
+          viewBox="0 0 ${width + xPadding} ${height + yPadding}"
           preserveAspectRatio="none"
           class="dendrogram-svg"
         >
@@ -209,10 +212,10 @@ export class BiowcHeatmapDendrogram extends LitElement {
 
               return svg`
                 <line
-                  x1=${x1}
-                  y1=${y1}
-                  x2=${x2}
-                  y2=${y2}
+                  x1=${x1 + xPadding / 2}
+                  y1=${y1 + yPadding / 2}
+                  x2=${x2 + xPadding / 2}
+                  y2=${y2 + yPadding / 2}
                   stroke="black"
                   stroke-width="2px"
                   vector-effect="non-scaling-stroke"
