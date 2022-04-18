@@ -6,6 +6,7 @@ import { BiowcHeatmapHeatmap } from './BiowcHeatmapHeatmap.js';
 import { BiowcHeatmapLabels, TextAlign } from './BiowcHeatmapLabels.js';
 import {
   BiowcHeatmapDendrogram,
+  DendrogramList,
   DendrogramNode,
 } from './BiowcHeatmapDendrogram.js';
 
@@ -21,7 +22,7 @@ export type Labels = {
 };
 
 export type Dendrograms = {
-  [key in Side]?: DendrogramNode;
+  [key in Side]?: DendrogramNode | DendrogramList;
 };
 
 export type SideNumbers = {

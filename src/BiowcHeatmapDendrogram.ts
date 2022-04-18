@@ -4,12 +4,32 @@ import styles from './biowc-heatmap-dendrogram.css.js';
 import { Side } from './BiowcHeatmap.js';
 
 export interface DendrogramNode {
-  id: number;
   left: DendrogramNode | number;
   right: DendrogramNode | number;
   height: number;
   center?: number;
 }
+
+export function isDendrogramNode(object: any) {
+  return (
+    typeof object === 'object' &&
+    typeof object.id === 'number' &&
+    (typeof object.left === 'number' || typeof object.left === 'object') &&
+    (typeof object.right === 'number' || typeof object.right === 'object') &&
+    typeof object.height === 'number'
+  );
+}
+
+export interface DendrogramEntry {
+  left: number;
+  isLeftDendrogram: boolean;
+  right: number;
+  isRightDendrogram: boolean;
+  height: number;
+  center?: number;
+}
+
+export type DendrogramList = DendrogramEntry[];
 
 export interface Line {
   x1: number;
@@ -18,7 +38,7 @@ export interface Line {
   y2: number;
 }
 
-function calcDendrogramCenters(node: DendrogramNode): DendrogramNode {
+function calcDendrogramNodeCenters(node: DendrogramNode): DendrogramNode {
   if (typeof node.left === 'number' && typeof node.right === 'number') {
     return {
       ...node,
@@ -27,7 +47,7 @@ function calcDendrogramCenters(node: DendrogramNode): DendrogramNode {
   }
 
   if (typeof node.left !== 'number' && typeof node.right === 'number') {
-    const left = calcDendrogramCenters(node.left);
+    const left = calcDendrogramNodeCenters(node.left);
     return {
       ...node,
       left,
@@ -36,7 +56,7 @@ function calcDendrogramCenters(node: DendrogramNode): DendrogramNode {
   }
 
   if (typeof node.left === 'number' && typeof node.right !== 'number') {
-    const right = calcDendrogramCenters(node.right);
+    const right = calcDendrogramNodeCenters(node.right);
     return {
       ...node,
       right,
@@ -45,8 +65,8 @@ function calcDendrogramCenters(node: DendrogramNode): DendrogramNode {
   }
 
   if (typeof node.left !== 'number' && typeof node.right !== 'number') {
-    const left = calcDendrogramCenters(node.left);
-    const right = calcDendrogramCenters(node.right);
+    const left = calcDendrogramNodeCenters(node.left);
+    const right = calcDendrogramNodeCenters(node.right);
     return {
       ...node,
       left,
@@ -58,7 +78,7 @@ function calcDendrogramCenters(node: DendrogramNode): DendrogramNode {
   throw new Error('Invalid dendrogram node');
 }
 
-function calcDendrogramLines(node: DendrogramNode): Line[] {
+function calcDendrogramNodeLines(node: DendrogramNode): Line[] {
   if (typeof node.left === 'number' && typeof node.right === 'number') {
     return [
       {
@@ -83,7 +103,7 @@ function calcDendrogramLines(node: DendrogramNode): Line[] {
   }
 
   if (typeof node.left !== 'number' && typeof node.right === 'number') {
-    const left = calcDendrogramLines(node.left);
+    const left = calcDendrogramNodeLines(node.left);
     return [
       ...left,
       {
@@ -108,7 +128,7 @@ function calcDendrogramLines(node: DendrogramNode): Line[] {
   }
 
   if (typeof node.left === 'number' && typeof node.right !== 'number') {
-    const right = calcDendrogramLines(node.right);
+    const right = calcDendrogramNodeLines(node.right);
     return [
       ...right,
       {
@@ -133,8 +153,8 @@ function calcDendrogramLines(node: DendrogramNode): Line[] {
   }
 
   if (typeof node.left !== 'number' && typeof node.right !== 'number') {
-    const left = calcDendrogramLines(node.left);
-    const right = calcDendrogramLines(node.right);
+    const left = calcDendrogramNodeLines(node.left);
+    const right = calcDendrogramNodeLines(node.right);
     return [
       ...left,
       ...right,
@@ -162,6 +182,206 @@ function calcDendrogramLines(node: DendrogramNode): Line[] {
   throw new Error('Invalid dendrogram node');
 }
 
+function calcDendrogramNodeWidth(node: DendrogramNode): number {
+  let currentNode = node;
+
+  while (typeof currentNode.right !== 'number') {
+    currentNode = currentNode.right;
+  }
+
+  return currentNode.right;
+}
+
+function calcDendrogramListCenters(list: DendrogramList): DendrogramList {
+  // TODO: Maybe there is a more readable and or efficent way to do this?
+  const listWithCenters: DendrogramList = Array(list.length);
+  const toProcess: Array<number> = [...list.keys()];
+  const stack: number[] = [];
+
+  while (toProcess.length + stack.length > 0) {
+    const index = stack.pop() || toProcess[toProcess.length - 1];
+    toProcess.splice(index);
+    const entry = list[index];
+
+    const leftCenter = listWithCenters[entry.left]?.center;
+    const rightCenter = listWithCenters[entry.right]?.center;
+
+    if (entry.isLeftDendrogram && leftCenter === undefined) {
+      stack.push(index);
+      stack.push(entry.left);
+    } else if (entry.isRightDendrogram && rightCenter === undefined) {
+      stack.push(index);
+      stack.push(entry.right);
+    } else if (!entry.isLeftDendrogram && !entry.isRightDendrogram) {
+      listWithCenters[index] = {
+        ...entry,
+        center: (entry.left + entry.right) / 2,
+      };
+    } else if (
+      entry.isLeftDendrogram &&
+      !entry.isRightDendrogram &&
+      leftCenter !== undefined
+    ) {
+      listWithCenters[index] = {
+        ...entry,
+        center: (leftCenter + entry.right) / 2,
+      };
+    } else if (
+      !entry.isLeftDendrogram &&
+      entry.isRightDendrogram &&
+      rightCenter !== undefined
+    ) {
+      listWithCenters[index] = {
+        ...entry,
+        center: (entry.left + rightCenter) / 2,
+      };
+    } else if (
+      entry.isLeftDendrogram &&
+      entry.isRightDendrogram &&
+      leftCenter !== undefined &&
+      rightCenter !== undefined
+    ) {
+      listWithCenters[index] = {
+        ...entry,
+        center: (leftCenter + rightCenter) / 2,
+      };
+    } else {
+      throw new Error('Invalid dendrogram list');
+    }
+  }
+
+  return listWithCenters;
+}
+
+function calcDendrogramListLines(list: DendrogramList): Line[] {
+  const lines: Line[] = [];
+
+  for (const entry of list) {
+    if (!entry.isLeftDendrogram && !entry.isRightDendrogram) {
+      lines.push({
+        x1: entry.left,
+        y1: entry.height,
+        x2: entry.right,
+        y2: entry.height,
+      });
+      lines.push({
+        x1: entry.left,
+        y1: 0,
+        x2: entry.left,
+        y2: entry.height,
+      });
+      lines.push({
+        x1: entry.right,
+        y1: 0,
+        x2: entry.right,
+        y2: entry.height,
+      });
+    }
+
+    if (entry.isLeftDendrogram && !entry.isRightDendrogram) {
+      const leftEntry = list[entry.left];
+      const left = leftEntry.center ?? 0;
+      lines.push({
+        x1: left,
+        y1: entry.height,
+        x2: entry.right,
+        y2: entry.height,
+      });
+      lines.push({
+        x1: left,
+        y1: leftEntry.height,
+        x2: left,
+        y2: entry.height,
+      });
+      lines.push({
+        x1: entry.right,
+        y1: 0,
+        x2: entry.right,
+        y2: entry.height,
+      });
+    }
+
+    if (!entry.isLeftDendrogram && entry.isRightDendrogram) {
+      const rightEntry = list[entry.right];
+      const right = rightEntry.center ?? 0;
+      lines.push({
+        x1: entry.left,
+        y1: entry.height,
+        x2: right,
+        y2: entry.height,
+      });
+      lines.push({
+        x1: entry.left,
+        y1: 0,
+        x2: entry.left,
+        y2: entry.height,
+      });
+      lines.push({
+        x1: right,
+        y1: rightEntry.height,
+        x2: right,
+        y2: entry.height,
+      });
+    }
+
+    if (entry.isLeftDendrogram && entry.isRightDendrogram) {
+      const leftEntry = list[entry.left];
+      const rightEntry = list[entry.right];
+      const left = leftEntry.center ?? 0;
+      const right = rightEntry.center ?? 0;
+      lines.push({
+        x1: left,
+        y1: entry.height,
+        x2: right,
+        y2: entry.height,
+      });
+      lines.push({
+        x1: left,
+        y1: leftEntry.height,
+        x2: left,
+        y2: entry.height,
+      });
+      lines.push({
+        x1: right,
+        y1: rightEntry.height,
+        x2: right,
+        y2: entry.height,
+      });
+    }
+  }
+
+  return lines;
+}
+
+function calcDendrogragramListMaxHeight(list: DendrogramList): number {
+  let maxHeight = 0;
+
+  for (const entry of list) {
+    if (entry.height > maxHeight) {
+      maxHeight = entry.height;
+    }
+  }
+
+  return maxHeight;
+}
+
+function calcDendrogramListWidth(list: DendrogramList): number {
+  let minLeft = Infinity;
+  let maxRight = -Infinity;
+
+  for (const entry of list) {
+    if (entry.left < minLeft) {
+      minLeft = entry.left;
+    }
+
+    if (entry.right > maxRight) {
+      maxRight = entry.right;
+    }
+  }
+
+  return maxRight - minLeft;
+}
+
 export class BiowcHeatmapDendrogram extends LitElement {
   static styles = styles;
 
@@ -169,7 +389,7 @@ export class BiowcHeatmapDendrogram extends LitElement {
   side: Side = Side.top;
 
   @property({ attribute: false })
-  dendrogram: DendrogramNode | undefined;
+  dendrogram: DendrogramNode | DendrogramList | undefined;
 
   render(): SVGTemplateResult {
     if (this.dendrogram !== undefined) {
@@ -231,25 +451,46 @@ export class BiowcHeatmapDendrogram extends LitElement {
     return svg``;
   }
 
-  private get _dendrogramWithCenters(): DendrogramNode {
-    return calcDendrogramCenters(this.dendrogram!);
+  private get _dendrogramWithCenters(): DendrogramNode | DendrogramList {
+    if (isDendrogramNode(this.dendrogram)) {
+      return calcDendrogramNodeCenters(this.dendrogram! as DendrogramNode);
+    }
+
+    return calcDendrogramListCenters(this.dendrogram! as DendrogramList);
   }
 
   private get _dendrogramLines(): Line[] {
-    return calcDendrogramLines(this._dendrogramWithCenters);
+    if (isDendrogramNode(this.dendrogram)) {
+      return calcDendrogramNodeLines(
+        this._dendrogramWithCenters as DendrogramNode
+      );
+    }
+
+    return calcDendrogramListLines(
+      this._dendrogramWithCenters as DendrogramList
+    );
   }
 
   private get _dendrogramHeight(): number {
-    return this._dendrogramWithCenters.height;
+    if (isDendrogramNode(this.dendrogram)) {
+      return (this._dendrogramWithCenters as DendrogramNode).height;
+    }
+
+    return calcDendrogragramListMaxHeight(
+      this._dendrogramWithCenters as DendrogramList
+    );
   }
 
   private get _dendrogramWidth(): number {
-    let currentNode = this._dendrogramWithCenters;
-
-    while (typeof currentNode.right !== 'number') {
-      currentNode = currentNode.right;
+    if (isDendrogramNode(this.dendrogram)) {
+      return (
+        calcDendrogramNodeWidth(this._dendrogramWithCenters as DendrogramNode) +
+        1
+      );
     }
 
-    return currentNode.right + 1;
+    return (
+      calcDendrogramListWidth(this._dendrogramWithCenters as DendrogramList) + 1
+    );
   }
 }
