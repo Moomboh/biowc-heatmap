@@ -30,67 +30,6 @@
 
   <div id="demo"></div>
 
-  <script type="module">
-    import { html, render } from 'lit';
-    import '../dist/src/biowc-heatmap.js';
-    import { fetchDemoData } from '../dist/demo/app.js';
-
-    const demoData = await fetchDemoData();
-
-    render(
-      html`
-        <biowc-heatmap
-          .data=${demoData.data}
-          .labels=${{
-            top: demoData.xLabels,
-            left: demoData.yLabels,
-            right: demoData.yLabels,
-            bottom: demoData.xLabels,
-          }}
-          .dendrograms=${{
-            top: demoData.xDendrogram,
-            left: demoData.yDendrogram,
-            right: demoData.yDendrogram,
-            bottom: demoData.xDendrogram,
-          }}
-        ></biowc-heatmap>
-      `,
-      document.querySelector('#demo')
-    );
-
-    const heatmap = document.querySelector('biowc-heatmap');
-    const zoomInButton = document.querySelector('#zoom-in');
-    const zoomOutButton = document.querySelector('#zoom-out');
-    const scrollToCenterButton = document.querySelector('#scrollto-center');
-    const scrollToStartButton = document.querySelector('#scrollto-start');
-    const scrollToEndButton = document.querySelector('#scrollto-end');
-
-    zoomInButton.addEventListener('click', () => {
-      heatmap.zoom += 0.5;
-    });
-
-    zoomOutButton.addEventListener('click', () => {
-      heatmap.zoom -= 0.5;
-    });
-
-    scrollToCenterButton.addEventListener('click', () => {
-      heatmap.scrollToCell(
-        Math.floor(heatmap.data.length / 2),
-        Math.floor(heatmap.data[0].length / 2)
-      );
-    });
-
-    scrollToStartButton.addEventListener('click', () => {
-      heatmap.scrollToCell(0, 0);
-    });
-
-    scrollToEndButton.addEventListener('click', () => {
-      heatmap.scrollToCell(
-        heatmap.data.length - 1,
-        heatmap.data[0].length - 1
-      );
-    });
-
-  </script>
+  <script type="module" src="../dist/demo/app.js"></script>
 </body>
 </html>
