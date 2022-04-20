@@ -23,8 +23,8 @@ export class BiowcHeatmapLabels extends LitElement {
   @property({ attribute: false })
   labels: string[] = [];
 
-  @property({ type: Number })
-  scrollPadding = 1;
+  @property({ attribute: false })
+  hoveredIndex: number | null = null;
 
   private _resizeObserver: ResizeObserver | undefined;
 
@@ -55,8 +55,16 @@ export class BiowcHeatmapLabels extends LitElement {
 
     return html`
       ${this.labels.map(
-        label => html`
-          <div class="label align-${this.textalign}">${label}</div>
+        (label, index) => html`
+          <div
+            class="
+              label
+              align-${this.textalign}
+              ${index === this.hoveredIndex ? 'hover' : ''}
+            "
+          >
+            ${label}
+          </div>
         `
       )}
     `;

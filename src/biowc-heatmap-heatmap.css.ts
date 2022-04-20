@@ -12,4 +12,12 @@ svg {
     display: block;
     shape-rendering: optimizeSpeed;
 }
+
+.cell {
+    cursor: pointer;
+}
+
+.cell:hover {
+    fill: var(--biowc-heatmap-heatmap-hover-border-color, rgba(127, 127, 255, 1));
+}
 `;

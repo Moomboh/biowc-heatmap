@@ -90,6 +90,12 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   @state()
   private _heatmapWrapperHeight: number = 1;
 
+  @state()
+  private _hoveredCellX: number | null = null;
+
+  @state()
+  private _hoveredCellY: number | null = null;
+
   private _resizeObserver: ResizeObserver | undefined;
 
   constructor() {
@@ -123,6 +129,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
         <biowc-heatmap-heatmap
           .data=${this.data}
           .color=${this.color}
+          @biowc-heatmap-cell-hover=${this._onCellHover}
           style="
             width: ${this._fittedZoomX * 100}%;
             height: ${this._fittedZoomY * 100}%;
@@ -159,6 +166,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
           <biowc-heatmap-labels
             .labels=${this.labels[side]}
             ?horizontal=${horizontal}
+            .hoveredIndex=${
+              horizontal ? this._hoveredCellX : this._hoveredCellY
+            }
             textalign=${BiowcHeatmap.sideToTextAlign(side)}
             style="${
               horizontal
@@ -302,5 +312,10 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
       // eslint-disable-next-line no-param-reassign
       wrapper.scrollLeft = scrollLeft;
     });
+  }
+
+  private _onCellHover(event: CustomEvent) {
+    this._hoveredCellX = event.detail.x;
+    this._hoveredCellY = event.detail.y;
   }
 }

@@ -26,6 +26,10 @@ export default css`
     text-overflow: ellipsis;
 }
 
+.label.hover {
+    background: var(--biowc-heatmap-labels-hover-background-color, rgba(127, 127, 255, 1));
+}
+
 :host([horizontal]) .label {
     height: 100%;
     width: auto;
