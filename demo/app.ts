@@ -31,9 +31,11 @@ const zoomInButton = document.querySelector('#zoom-in');
 const zoomOutButton = document.querySelector('#zoom-out');
 
 zoomInButton?.addEventListener('click', () => {
-  heatmap.zoom += 0.5;
+  heatmap.zoomX += 0.5;
+  heatmap.zoomY += 0.5;
 });
 
 zoomOutButton?.addEventListener('click', () => {
-  heatmap.zoom -= 0.5;
+  heatmap.zoomX += 0.5;
+  heatmap.zoomY += 0.5;
 });

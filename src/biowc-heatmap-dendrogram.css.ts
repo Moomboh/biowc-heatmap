@@ -12,4 +12,10 @@ export default css`
 svg {
     display: block;
 }
+
+line {
+    stroke: black;
+    stroke-width: 1px;
+    vector-effect: non-scaling-stroke;
+}
 `;

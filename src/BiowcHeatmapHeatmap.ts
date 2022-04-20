@@ -1,5 +1,6 @@
 import { svg, LitElement, SVGTemplateResult } from 'lit';
 import { property } from 'lit/decorators.js';
+import { colorScale } from './util/colors.js';
 import styles from './biowc-heatmap-heatmap.css.js';
 
 export class BiowcHeatmapHeatmap extends LitElement {
@@ -8,23 +9,32 @@ export class BiowcHeatmapHeatmap extends LitElement {
   @property({ attribute: false })
   data: number[][] = [];
 
-  @property({ type: Number })
-  gutter: number = 0.02;
-
-  @property({ type: String })
-  color: String = '#b40000';
+  @property({ attribute: false })
+  color: string = '#b40000';
 
   render(): SVGTemplateResult {
+    const scale = colorScale(this.color);
+
     return svg`
-      <svg viewBox="0 0 ${this._nCols} ${this._nRows}">
-        <rect
-          x="0"
-          y="0"
-          width="${this._nCols}"
-          height="${this._nRows}"
-          class="background"
-        />
-        ${this.data.map((row, i) => this._renderHeatmapRow(row, i))}
+      <svg
+        width="100%"
+        height="100%"
+        preserveAspectRatio="none"
+        viewBox="0 0 ${this._nCols} ${this._nRows}"
+      >
+        ${this.data.map(
+          (row, y) => svg`
+          ${row.map(
+            (value, x) => svg`
+            <rect
+              x="${x}"
+              y="${y}"
+              width="1"
+              height="1"
+              fill="${scale(value)}"
+            />`
+          )}`
+        )}
       </svg>
     `;
   }
@@ -38,21 +48,5 @@ export class BiowcHeatmapHeatmap extends LitElement {
       return 0;
     }
     return this.data[0].length;
-  }
-
-  _renderHeatmapCell(x: number, y: number, value: number): SVGTemplateResult {
-    return svg`
-      <rect
-        x="${x + this.gutter}"
-        y="${y + this.gutter}"
-        width="${1 - this.gutter}"
-        height="${1 - this.gutter}"
-        fill="${this.color}"
-        opacity="${value}"/>
-    `;
-  }
-
-  _renderHeatmapRow(row: Array<number>, y: number): SVGTemplateResult {
-    return svg`${row.map((value, x) => this._renderHeatmapCell(x, y, value))}`;
   }
 }

@@ -436,9 +436,6 @@ export class BiowcHeatmapDendrogram extends LitElement {
                   y1=${y1 + yPadding / 2}
                   x2=${x2 + xPadding / 2}
                   y2=${y2 + yPadding / 2}
-                  stroke="black"
-                  stroke-width="2px"
-                  vector-effect="non-scaling-stroke"
                 />
                 `;
             })}

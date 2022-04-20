@@ -36,24 +36,34 @@ export default css`
     gap: var(--biowc-heatmap-gap, 10px);
 }
 
+.heatmap {
+    overflow: auto;
+    will-change: scroll-position;
+    grid-area: heatmap;
+}
+
 .labels {
-    width: 100%;
-    height: 100%;
     overflow: hidden;
+    will-change: scroll-position;
     scrollbar-color: transparent, transparent;
 }
 
-.heatmap {
-    grid-area: heatmap;
-    height: 0;
-    overflow: auto;
-    position: relative;
+.dendrogram {
+    overflow: hidden;
+    will-change: scroll-position;
+    scrollbar-color: transparent, transparent;
 }
 
 .heatmap biowc-heatmap-heatmap {
-    position: absolute;
-    top: 0;
-    left: 0;
+    will-change: width, height;
+}
+
+.dendrogram biowc-heatmap-dendrogram {
+    will-change: width, height;
+}
+
+.labels biowc-heatmap-labels {
+    will-change: width, height;
 }
 
 .labels-top {
@@ -70,11 +80,6 @@ export default css`
 
 .labels-bottom {
     grid-area: labels-bottom;
-}
-
-.dendrogram {
-    overflow: hidden;
-    scrollbar-color: transparent, transparent;
 }
 
 .dendrogram-top {

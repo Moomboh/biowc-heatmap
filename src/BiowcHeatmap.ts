@@ -1,5 +1,5 @@
 import { html, LitElement, HTMLTemplateResult } from 'lit';
-import { property, query } from 'lit/decorators.js';
+import { property, query, queryAll, state } from 'lit/decorators.js';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 import styles from './biowc-heatmap.css.js';
 import { BiowcHeatmapHeatmap } from './BiowcHeatmapHeatmap.js';
@@ -59,7 +59,10 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   gutter: number = 0.02;
 
   @property({ type: Number })
-  zoom = 1;
+  zoomX = 1;
+
+  @property({ type: Number })
+  zoomY = 1;
 
   @property({ attribute: false })
   data: number[][] = [];
@@ -73,20 +76,30 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   @query('.heatmap')
   private _heatmapWrapperElement: HTMLElement | undefined;
 
-  @property({ attribute: false })
-  private _scrollTop: number = 0;
+  @queryAll('.labels-top, .labels-bottom, .dendrogram-top, .dendrogram-bottom')
+  // eslint-disable-next-line no-undef
+  private _horizontalWrappers: NodeListOf<HTMLElement> | undefined;
 
-  @property({ attribute: false })
-  private _scrollLeft: number = 0;
+  @queryAll('.labels-left, .labels-right, .dendrogram-left, .dendrogram-right')
+  // eslint-disable-next-line no-undef
+  private _verticalWrappers: NodeListOf<HTMLElement> | undefined;
+
+  @state()
+  private _heatmapWrapperWidth: number = 1;
+
+  @state()
+  private _heatmapWrapperHeight: number = 1;
+
+  private _resizeObserver: ResizeObserver | undefined;
 
   constructor() {
     super();
     this.addEventListener('wheel', this._onWheel);
+    this._resizeObserver = new ResizeObserver(this._onResize.bind(this));
+    this._resizeObserver.observe(this);
   }
 
   render(): HTMLTemplateResult {
-    this._setComputedStyles();
-
     return html`
       ${this._renderHeatmap()}
       ${this._renderSideLabels()}
@@ -94,18 +107,26 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     `;
   }
 
+  private _onResize() {
+    this._heatmapWrapperWidth = this._heatmapWrapperElement?.clientWidth ?? 1;
+    this._heatmapWrapperHeight = this._heatmapWrapperElement?.clientHeight ?? 1;
+    this.zoomX = 1 / this._fittedZoomX;
+    this.zoomY = 1 / this._fittedZoomY;
+  }
+
   private _renderHeatmap(): HTMLTemplateResult {
     return html`
       <div 
         class="heatmap"
         @scroll="${this._onHeatmapScroll}"
-          style="padding-top: calc(${this._nRows} / ${this._nCols} * 100%);"
       >
         <biowc-heatmap-heatmap
           .data=${this.data}
-          .gutter=${this.gutter}
           .color=${this.color}
-          style="width: ${this.zoom * 100}%"
+          style="
+            width: ${this._fittedZoomX * 100}%;
+            height: ${this._fittedZoomY * 100}%;
+          "
         ></biowc-heatmap-heatmap>
       </div>
     `;
@@ -119,17 +140,19 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
         }
 
         const horizontal = side === Side.top || side === Side.bottom;
+
         let scrollBarsStyle = '';
-        if (this.zoom > 1) {
-          scrollBarsStyle = horizontal
-            ? 'overflow-y: scroll'
-            : 'overflow-x: scroll';
+
+        if (this._fittedZoomY > 1 && horizontal) {
+          scrollBarsStyle = 'overflow-y: scroll';
+        }
+
+        if (this._fittedZoomX > 1 && !horizontal) {
+          scrollBarsStyle = 'overflow-x: scroll';
         }
 
         return html`
         <div
-          .scrollLeft=${horizontal ? this._scrollLeft : 0}
-          .scrollTop=${!horizontal ? this._scrollTop : 0}
           style=${scrollBarsStyle}
           class="labels labels-${side}"
         >
@@ -137,7 +160,11 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
             .labels=${this.labels[side]}
             ?horizontal=${horizontal}
             textalign=${BiowcHeatmap.sideToTextAlign(side)}
-            style="${horizontal ? 'width' : 'height'}: ${this.zoom * 100}%"
+            style="${
+              horizontal
+                ? `width: ${this._fittedZoomX * 100}%`
+                : `height: ${this._fittedZoomY * 100}%`
+            }"
           ></biowc-heatmap-labels>
         </div>
         `;
@@ -155,23 +182,28 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
         const horizontal = side === Side.top || side === Side.bottom;
 
         let scrollBarsStyle = '';
-        if (this.zoom > 1) {
-          scrollBarsStyle = horizontal
-            ? 'overflow-y: scroll'
-            : 'overflow-x: scroll';
+
+        if (this._fittedZoomY > 1 && horizontal) {
+          scrollBarsStyle = 'overflow-y: scroll';
+        }
+
+        if (this._fittedZoomX > 1 && !horizontal) {
+          scrollBarsStyle = 'overflow-x: scroll';
         }
 
         return html`
         <div
-          .scrollLeft=${horizontal ? this._scrollLeft : 0}
-          .scrollTop=${!horizontal ? this._scrollTop : 0}
           style=${scrollBarsStyle}
           class="dendrogram dendrogram-${side}"
         >
           <biowc-heatmap-dendrogram
             .dendrogram=${this.dendrograms[side]}
             .side=${side}
-            style="${horizontal ? 'width' : 'height'}: ${this.zoom * 100}%"
+            style="${
+              horizontal
+                ? `width: ${this._fittedZoomX * 100}%`
+                : `height: ${this._fittedZoomY * 100}%`
+            }"
           ></biowc-heatmap-dendrogram>
         </div>
         `;
@@ -202,23 +234,73 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     );
   }
 
-  private _setComputedStyles() {
-    this.style.setProperty(
-      '--biowc-heatmap-height',
-      `calc(${getComputedStyle(this).width} * ${this._nRows} / ${this._nCols})`
+  private get _fitZoomXFactor(): number {
+    return Math.max(
+      1,
+      (this._nCols / this._nRows) *
+        (this._heatmapWrapperHeight / this._heatmapWrapperWidth)
     );
   }
 
+  private get _fitZoomYFactor(): number {
+    return Math.max(
+      1,
+      (this._nRows / this._nCols) *
+        (this._heatmapWrapperWidth / this._heatmapWrapperHeight)
+    );
+  }
+
+  private get _fittedZoomX() {
+    if (this._nCols > this._nRows) {
+      return this.zoomX * this._fitZoomXFactor;
+    }
+
+    return this.zoomX;
+  }
+
+  private get _fittedZoomY() {
+    if (this._nRows > this._nCols) {
+      return this.zoomY * this._fitZoomYFactor;
+    }
+
+    return this.zoomY;
+  }
+
   private async _onWheel(event: WheelEvent) {
-    if (event.ctrlKey === true) {
+    // TODO: improve zoom performance and fix issues like being able to zoom out too much
+    if (event.ctrlKey) {
       event.preventDefault();
-      const zoom = event.deltaY / -this.clientWidth + this.zoom;
-      this.zoom = Math.max(1, zoom);
+
+      const deltaZoom = -event.deltaY;
+
+      if (event.shiftKey) {
+        this.zoomX = Math.max(
+          1 / this._fitZoomXFactor,
+          this.zoomX +
+            deltaZoom / this._heatmapWrapperWidth / this._fitZoomXFactor
+        );
+      } else {
+        this.zoomY = Math.max(
+          1 / this._fitZoomYFactor,
+          this.zoomY +
+            deltaZoom / this._heatmapWrapperHeight / this._fitZoomYFactor
+        );
+      }
     }
   }
 
   private _onHeatmapScroll() {
-    this._scrollTop = this._heatmapWrapperElement?.scrollTop ?? 0;
-    this._scrollLeft = this._heatmapWrapperElement?.scrollLeft ?? 0;
+    const scrollTop = this._heatmapWrapperElement?.scrollTop ?? 0;
+    const scrollLeft = this._heatmapWrapperElement?.scrollLeft ?? 0;
+
+    this._verticalWrappers?.forEach(wrapper => {
+      // eslint-disable-next-line no-param-reassign
+      wrapper.scrollTop = scrollTop;
+    });
+
+    this._horizontalWrappers?.forEach(wrapper => {
+      // eslint-disable-next-line no-param-reassign
+      wrapper.scrollLeft = scrollLeft;
+    });
   }
 }
