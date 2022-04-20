@@ -21,22 +21,26 @@ export class BiowcHeatmapHeatmap extends LitElement {
         height="100%"
         preserveAspectRatio="none"
         viewBox="0 0 ${this._nCols} ${this._nRows}"
-        @mouseleave="${this._onMouseLeave}"
       >
         ${this.data.map(
           (row, y) => svg`
-          ${row.map(
-            (value, x) => svg`
-            <rect
-              @mouseover=${this._onHoverCell}
-              x="${x}"
-              y="${y}"
-              width="1"
-              height="1"
-              fill="${scale(value)}"
-              class="cell"
-            />`
-          )}`
+          ${row.map((value, x) => {
+            if (value > 0) {
+              return svg`
+                <rect
+                  @mouseover=${this._onHoverCell}
+                  @mouseleave=${this._onMouseLeave}
+                  x="${x}"
+                  y="${y}"
+                  width="1"
+                  height="1"
+                  fill="${scale(value)}"
+                  class="cell"
+                />`;
+            }
+
+            return svg``;
+          })}`
         )}
       </svg>
     `;
