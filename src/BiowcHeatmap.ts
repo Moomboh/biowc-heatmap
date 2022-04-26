@@ -106,6 +106,8 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   }
 
   render(): HTMLTemplateResult {
+    this._setComputedStyleProps();
+
     return html`
       ${this._renderHeatmap()}
       ${this._renderSideLabels()}
@@ -118,6 +120,18 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     this._heatmapWrapperHeight = this._heatmapWrapperElement?.clientHeight ?? 1;
     this.zoomX = 1 / this._fittedZoomX;
     this.zoomY = 1 / this._fittedZoomY;
+  }
+
+  private _setComputedStyleProps() {
+    for (const side of Object.keys(Side)) {
+      if (!this._hasSideLabels[side]) {
+        this.style.setProperty(`--biowc-heatmap-labels-${side}-size`, '0');
+      }
+
+      if (!this._hasSideDendrogram[side]) {
+        this.style.setProperty(`--biowc-heatmap-dendrogram-${side}-size`, '0');
+      }
+    }
   }
 
   private _renderHeatmap(): HTMLTemplateResult {
