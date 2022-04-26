@@ -285,13 +285,13 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
       if (event.shiftKey) {
         this.zoomX = Math.max(
-          1 / this._fitZoomXFactor,
+          1,
           this.zoomX +
             deltaZoom / this._heatmapWrapperWidth / this._fitZoomXFactor
         );
       } else {
         this.zoomY = Math.max(
-          1 / this._fitZoomYFactor,
+          1,
           this.zoomY +
             deltaZoom / this._heatmapWrapperHeight / this._fitZoomYFactor
         );
