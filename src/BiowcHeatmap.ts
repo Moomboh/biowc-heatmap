@@ -283,15 +283,27 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
       const deltaZoom = -event.deltaY;
 
+      const minXzoom =
+        this._heatmapWrapperWidth / this._heatmapWrapperHeight <
+        this._nRows / this._nCols
+          ? 1
+          : 1 / this._fitZoomXFactor;
+
+      const minYzoom =
+        this._heatmapWrapperWidth / this._heatmapWrapperHeight >
+        this._nRows / this._nCols
+          ? 1
+          : 1 / this._fitZoomYFactor;
+
       if (event.shiftKey) {
         this.zoomX = Math.max(
-          1,
+          minXzoom,
           this.zoomX +
             deltaZoom / this._heatmapWrapperWidth / this._fitZoomXFactor
         );
       } else {
         this.zoomY = Math.max(
-          1,
+          minYzoom,
           this.zoomY +
             deltaZoom / this._heatmapWrapperHeight / this._fitZoomYFactor
         );
