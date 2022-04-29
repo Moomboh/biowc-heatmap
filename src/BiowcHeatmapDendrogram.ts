@@ -1,7 +1,8 @@
-import { LitElement, svg, SVGTemplateResult } from 'lit';
-import { property } from 'lit/decorators.js';
+import { LitElement, PropertyValueMap, svg, SVGTemplateResult } from 'lit';
+import { property, state } from 'lit/decorators.js';
 import styles from './biowc-heatmap-dendrogram.css.js';
 import { Side } from './BiowcHeatmap.js';
+import range from './util/range.js';
 
 export interface DendrogramNode {
   left: DendrogramNode | number;
@@ -25,7 +26,8 @@ export interface DendrogramEntry {
   isRightDendrogram: boolean;
   height: number;
   center?: number;
-  selected?: boolean;
+  leftBoundary?: number;
+  rightBoundary?: number;
 }
 
 export type DendrogramList = DendrogramEntry[];
@@ -36,6 +38,11 @@ interface DendrogramPath {
   bottomRight: Point;
   topLeft: Point;
   topRight: Point;
+  leftBoundary: number;
+  rightBoundary: number;
+  selected: boolean;
+  hovered: boolean;
+  height: number;
 }
 
 function dendrogramTreeToList(tree: DendrogramNode): DendrogramList {
@@ -52,11 +59,6 @@ function dendrogramTreeToList(tree: DendrogramNode): DendrogramList {
       ? recurse(node.right as DendrogramNode)
       : (node.right as number);
 
-    const center =
-      ((isLeftDendrogram ? list[left].center! : left) +
-        (isRightDendrogram ? list[right].center! : right)) /
-      2;
-
     const { height } = node;
 
     return (
@@ -65,7 +67,6 @@ function dendrogramTreeToList(tree: DendrogramNode): DendrogramList {
         isLeftDendrogram,
         right,
         isRightDendrogram,
-        center,
         height,
       }) - 1
     );
@@ -104,9 +105,12 @@ function calcDendrogramListWidth(list: DendrogramList): number {
   return maxRight - minLeft;
 }
 
-function calcDendrogramListCenters(list: DendrogramList): DendrogramList {
-  // TODO: Maybe there is a more readable and or efficent way to do this?
-  const listWithCenters: DendrogramList = Array(list.length);
+function calcDendrogramListCentersAndBoundaries(
+  list: DendrogramList
+): DendrogramList {
+  // TODO: Maybe there is a more readable and/or efficent way to do this (without
+  // recursion since then we would be again limited by the maximum call stack size)?
+  const resultList: DendrogramList = Array(list.length);
   const toProcess: Array<number> = [...list.keys()];
   const stack: number[] = [];
 
@@ -116,54 +120,67 @@ function calcDendrogramListCenters(list: DendrogramList): DendrogramList {
     const entry = list[index];
     const { left, right, isLeftDendrogram, isRightDendrogram } = entry;
 
-    const leftCenter = listWithCenters[left]?.center;
-    const rightCenter = listWithCenters[right]?.center;
+    const leftCenter = resultList[left]?.center;
+    const rightCenter = resultList[right]?.center;
+    const leftLowerBoundary = resultList[left]?.leftBoundary;
+    const leftUpperBoundary = resultList[left]?.rightBoundary;
+    const rightLowerBoundary = resultList[right]?.leftBoundary;
+    const rightUpperBoundary = resultList[right]?.rightBoundary;
 
-    if (isLeftDendrogram && leftCenter === undefined) {
+    const isLeftValueMissing =
+      leftCenter === undefined ||
+      leftLowerBoundary === undefined ||
+      leftUpperBoundary === undefined;
+    const isRightValueMissing =
+      rightCenter === undefined ||
+      rightLowerBoundary === undefined ||
+      rightUpperBoundary === undefined;
+
+    if (isLeftDendrogram && isLeftValueMissing) {
       stack.push(index);
       stack.push(left);
-    } else if (isRightDendrogram && rightCenter === undefined) {
+    } else if (isRightDendrogram && isRightValueMissing) {
       stack.push(index);
       stack.push(right);
     } else if (!isLeftDendrogram && !isRightDendrogram) {
-      listWithCenters[index] = {
+      resultList[index] = {
         ...entry,
         center: (left + right) / 2,
+        leftBoundary: left,
+        rightBoundary: right,
       };
-    } else if (
-      isLeftDendrogram &&
-      !isRightDendrogram &&
-      leftCenter !== undefined
-    ) {
-      listWithCenters[index] = {
+    } else if (isLeftDendrogram && !isRightDendrogram && !isLeftValueMissing) {
+      resultList[index] = {
         ...entry,
         center: (leftCenter + right) / 2,
+        leftBoundary: leftLowerBoundary,
+        rightBoundary: right,
       };
-    } else if (
-      !isLeftDendrogram &&
-      isRightDendrogram &&
-      rightCenter !== undefined
-    ) {
-      listWithCenters[index] = {
+    } else if (!isLeftDendrogram && isRightDendrogram && !isRightValueMissing) {
+      resultList[index] = {
         ...entry,
         center: (left + rightCenter) / 2,
+        leftBoundary: left,
+        rightBoundary: rightUpperBoundary,
       };
     } else if (
       isLeftDendrogram &&
       isRightDendrogram &&
-      leftCenter !== undefined &&
-      rightCenter !== undefined
+      !isLeftValueMissing &&
+      !isRightValueMissing
     ) {
-      listWithCenters[index] = {
+      resultList[index] = {
         ...entry,
         center: (leftCenter + rightCenter) / 2,
+        leftBoundary: leftLowerBoundary,
+        rightBoundary: rightUpperBoundary,
       };
     } else {
       throw new Error('Invalid dendrogram list');
     }
   }
 
-  return listWithCenters;
+  return resultList;
 }
 
 export class BiowcHeatmapDendrogram extends LitElement {
@@ -181,6 +198,18 @@ export class BiowcHeatmapDendrogram extends LitElement {
   @property({ type: Number })
   yShift = 0.0;
 
+  @property({ type: Number })
+  selectionMarkerWidth = 0.8;
+
+  @property({ attribute: false })
+  selected: Set<number> = new Set();
+
+  @state()
+  private _hoverLeftBoundary = 0;
+
+  @state()
+  private _hoverRightBoundary = 0;
+
   render(): SVGTemplateResult {
     if (this._dendrogramList.length === 0) {
       return svg``;
@@ -188,16 +217,22 @@ export class BiowcHeatmapDendrogram extends LitElement {
 
     return svg`
       <svg
-        version="1.1"
         width="100%"
         height="100%"
         viewBox="0 0 ${this._viewboxWidth} ${this._viewboxHeight}"
         preserveAspectRatio="none"
-        class="dendrogram-svg"
       >
         ${this._dendrogramPaths.map(path => this._renderPath(path))}
+        ${[...this.selected].map(index => this._renderSelected(index))}]}
       </svg>
     `;
+  }
+
+  willUpdate(
+    _changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>
+  ): void {
+    console.log('willUpdate');
+    super.willUpdate(_changedProperties);
   }
 
   private _renderPath(path: DendrogramPath): SVGTemplateResult {
@@ -213,13 +248,97 @@ export class BiowcHeatmapDendrogram extends LitElement {
     );
 
     return svg`
-        <path d="
-          M${bottomLeft.x} ${bottomLeft.y}
-          L${topLeft.x} ${topLeft.y}
-          L${topRight.x} ${topRight.y}
-          L${bottomRight.x} ${bottomRight.y}
-        "/>
+        <path
+          class="
+            ${path.hovered ? 'hovered' : ''}
+            ${path.selected ? 'selected' : ''}
+          "
+          d="
+            M${bottomLeft.x} ${bottomLeft.y}
+            L${topLeft.x} ${topLeft.y}
+            L${topRight.x} ${topRight.y}
+            L${bottomRight.x} ${bottomRight.y}
+          "
+          @mouseenter="${this._onPathMouseenter(
+            path.leftBoundary,
+            path.rightBoundary
+          )}"
+          @mouseleave="${this._onPathMouseleave}"
+          @click="${this._onPathClick}"
+        />
       `;
+  }
+
+  private _renderSelected(index: number): SVGTemplateResult {
+    const from = this._transformCoords({
+      x: index - this.selectionMarkerWidth / 2,
+      y: -this.yShift,
+    });
+
+    const to = this._transformCoords({
+      x: index + this.selectionMarkerWidth / 2,
+      y: -this.yShift,
+    });
+
+    return svg`
+      <line
+        class="selection-marker"
+        x1="${from.x}"
+        y1="${from.y}"
+        x2="${to.x}"
+        y2="${to.y}"
+      />
+    `;
+  }
+
+  private _onPathMouseenter(leftBoundary: number, rightBoundary: number) {
+    return () => {
+      this._hoverLeftBoundary = leftBoundary;
+      this._hoverRightBoundary = rightBoundary;
+
+      const pathHoverEvent = new CustomEvent('biowc-heatmap-dendrogram-hover', {
+        detail: {
+          leftBoundary,
+          rightBoundary,
+        },
+      });
+
+      this.dispatchEvent(pathHoverEvent);
+    };
+  }
+
+  private _onPathMouseleave() {
+    this._hoverLeftBoundary = 0;
+    this._hoverRightBoundary = 0;
+
+    const hoverEvent = new CustomEvent('biowc-heatmap-dendrogram-hover', {
+      detail: {
+        leftBoundary: 0,
+        rightBoundary: 0,
+      },
+    });
+    this.dispatchEvent(hoverEvent);
+  }
+
+  private _onPathClick() {
+    const hovered = range(this._hoverLeftBoundary, this._hoverRightBoundary);
+
+    if (hovered.every(x => this.selected.has(x))) {
+      hovered.forEach(x => this.selected.delete(x));
+    } else {
+      hovered.forEach(x => {
+        this.selected.add(x);
+      });
+    }
+
+    const selectedEvent = new CustomEvent('biowc-heatmap-dendrogram-select', {
+      detail: {
+        selected: this.selected,
+      },
+    });
+    this.dispatchEvent(selectedEvent);
+
+    this.requestUpdate('selected');
   }
 
   private get _horizontal(): boolean {
@@ -228,10 +347,14 @@ export class BiowcHeatmapDendrogram extends LitElement {
 
   private get _dendrogramList(): DendrogramList {
     if (isDendrogramNode(this.dendrogram)) {
-      return dendrogramTreeToList(this.dendrogram as DendrogramNode);
+      return calcDendrogramListCentersAndBoundaries(
+        dendrogramTreeToList(this.dendrogram as DendrogramNode)
+      );
     }
 
-    return calcDendrogramListCenters(this.dendrogram as DendrogramList);
+    return calcDendrogramListCentersAndBoundaries(
+      this.dendrogram as DendrogramList
+    );
   }
 
   private get _dendrogramHeight(): number {
@@ -250,26 +373,35 @@ export class BiowcHeatmapDendrogram extends LitElement {
       const { left, right, height, isLeftDendrogram, isRightDendrogram } =
         entry;
 
+      const leftBoundary = entry.leftBoundary!;
+      const rightBoundary = entry.rightBoundary!;
+
       const leftPos = isLeftDendrogram ? list[left].center! : left;
       const rightPos = isRightDendrogram ? list[right].center! : right;
 
       const leftHeight = isLeftDendrogram ? list[left].height : -this.yShift;
       const rightHeight = isRightDendrogram ? list[right].height : -this.yShift;
 
-      const bottomLeft = { x: leftPos, y: leftHeight };
-      const bottomRight = { x: rightPos, y: rightHeight };
-      const topLeft = { x: leftPos, y: height };
-      const topRight = { x: rightPos, y: height };
+      const selected =
+        this.selected.has(leftBoundary) && this.selected.has(rightBoundary);
+      const hovered =
+        leftBoundary >= this._hoverLeftBoundary &&
+        rightBoundary <= this._hoverRightBoundary;
 
       paths.push({
-        bottomLeft,
-        bottomRight,
-        topLeft,
-        topRight,
+        bottomLeft: { x: leftPos, y: leftHeight },
+        bottomRight: { x: rightPos, y: rightHeight },
+        topLeft: { x: leftPos, y: height },
+        topRight: { x: rightPos, y: height },
+        leftBoundary,
+        rightBoundary,
+        selected,
+        hovered,
+        height,
       });
     }
 
-    return paths;
+    return paths.sort((a, b) => b.height - a.height);
   }
 
   private get _transformCoords(): (point: Point) => Point {
@@ -282,7 +414,7 @@ export class BiowcHeatmapDendrogram extends LitElement {
 
     if (this.side === Side.left) {
       return (point: Point): Point => ({
-        x: this._viewboxWidth - (point.y + this.yShift),
+        x: this._viewboxWidth - point.y - this.yShift,
         y: point.x + this.xShift,
       });
     }
@@ -305,7 +437,7 @@ export class BiowcHeatmapDendrogram extends LitElement {
   }
 
   private get _drawHeight(): number {
-    return this._dendrogramHeight + this.yShift;
+    return this._dendrogramHeight + 2 * this.yShift;
   }
 
   private get _viewboxWidth(): number {
