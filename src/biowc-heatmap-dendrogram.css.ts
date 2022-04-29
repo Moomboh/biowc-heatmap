@@ -13,8 +13,9 @@ svg {
     display: block;
 }
 
-line {
+path {
     stroke: black;
+    fill: none;
     stroke-width: 1px;
     vector-effect: non-scaling-stroke;
 }

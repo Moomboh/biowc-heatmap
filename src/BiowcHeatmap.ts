@@ -221,8 +221,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
           class="dendrogram dendrogram-${side}"
         >
           <biowc-heatmap-dendrogram
-            .dendrogram=${this.dendrograms[side]}
+            .dendrogram=${this.dendrograms[side]!}
             .side=${side}
+            yShift="0.1"
             style="${
               horizontal
                 ? `width: ${this._fittedZoomX * 100}%`
