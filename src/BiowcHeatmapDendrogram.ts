@@ -1,8 +1,9 @@
-import { LitElement, PropertyValueMap, svg, SVGTemplateResult } from 'lit';
+import { LitElement, svg, SVGTemplateResult } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import styles from './biowc-heatmap-dendrogram.css.js';
 import { Side } from './BiowcHeatmap.js';
 import range from './util/range.js';
+import { computed } from './util/computedDecorator.js';
 
 export interface DendrogramNode {
   left: DendrogramNode | number;
@@ -40,8 +41,6 @@ interface DendrogramPath {
   topRight: Point;
   leftBoundary: number;
   rightBoundary: number;
-  selected: boolean;
-  hovered: boolean;
   height: number;
 }
 
@@ -222,20 +221,18 @@ export class BiowcHeatmapDendrogram extends LitElement {
         viewBox="0 0 ${this._viewboxWidth} ${this._viewboxHeight}"
         preserveAspectRatio="none"
       >
-        ${this._dendrogramPaths.map(path => this._renderPath(path))}
+        ${this._dendrogramPaths.map((path, index) =>
+          this._renderPath(path, index)
+        )}
         ${[...this.selected].map(index => this._renderSelected(index))}]}
       </svg>
     `;
   }
 
-  willUpdate(
-    _changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>
-  ): void {
-    console.log('willUpdate');
-    super.willUpdate(_changedProperties);
-  }
-
-  private _renderPath(path: DendrogramPath): SVGTemplateResult {
+  private _renderPath(
+    path: DendrogramPath,
+    pathIndex: number
+  ): SVGTemplateResult {
     const pointList = [
       path.bottomLeft,
       path.topLeft,
@@ -250,8 +247,9 @@ export class BiowcHeatmapDendrogram extends LitElement {
     return svg`
         <path
           class="
-            ${path.hovered ? 'hovered' : ''}
-            ${path.selected ? 'selected' : ''}
+            dendrogram-path
+            ${this._hoveredPathIndices.has(pathIndex) ? 'hovered' : ''}
+            ${this._selectedPathIndices.has(pathIndex) ? 'selected' : ''}
           "
           d="
             M${bottomLeft.x} ${bottomLeft.y}
@@ -282,7 +280,16 @@ export class BiowcHeatmapDendrogram extends LitElement {
 
     return svg`
       <line
-        class="selection-marker"
+        class="
+          selection-marker
+          ${this.selected.has(index) ? 'selected' : ''}
+          ${
+            this._hoverLeftBoundary <= index &&
+            this._hoverRightBoundary >= index
+              ? 'hovered'
+              : ''
+          }
+        "
         x1="${from.x}"
         y1="${from.y}"
         x2="${to.x}"
@@ -341,10 +348,12 @@ export class BiowcHeatmapDendrogram extends LitElement {
     this.requestUpdate('selected');
   }
 
+  @computed()
   private get _horizontal(): boolean {
     return this.side === Side.top || this.side === Side.bottom;
   }
 
+  @computed()
   private get _dendrogramList(): DendrogramList {
     if (isDendrogramNode(this.dendrogram)) {
       return calcDendrogramListCentersAndBoundaries(
@@ -357,53 +366,37 @@ export class BiowcHeatmapDendrogram extends LitElement {
     );
   }
 
-  private get _dendrogramHeight(): number {
-    return calcDendrogragramListMaxHeight(this._dendrogramList);
-  }
-
+  @computed()
   private get _dendrogramWidth(): number {
     return calcDendrogramListWidth(this._dendrogramList);
   }
 
-  private get _dendrogramPaths(): DendrogramPath[] {
-    const list = this._dendrogramList;
-    const paths: DendrogramPath[] = [];
-
-    for (const entry of list) {
-      const { left, right, height, isLeftDendrogram, isRightDendrogram } =
-        entry;
-
-      const leftBoundary = entry.leftBoundary!;
-      const rightBoundary = entry.rightBoundary!;
-
-      const leftPos = isLeftDendrogram ? list[left].center! : left;
-      const rightPos = isRightDendrogram ? list[right].center! : right;
-
-      const leftHeight = isLeftDendrogram ? list[left].height : -this.yShift;
-      const rightHeight = isRightDendrogram ? list[right].height : -this.yShift;
-
-      const selected =
-        this.selected.has(leftBoundary) && this.selected.has(rightBoundary);
-      const hovered =
-        leftBoundary >= this._hoverLeftBoundary &&
-        rightBoundary <= this._hoverRightBoundary;
-
-      paths.push({
-        bottomLeft: { x: leftPos, y: leftHeight },
-        bottomRight: { x: rightPos, y: rightHeight },
-        topLeft: { x: leftPos, y: height },
-        topRight: { x: rightPos, y: height },
-        leftBoundary,
-        rightBoundary,
-        selected,
-        hovered,
-        height,
-      });
-    }
-
-    return paths.sort((a, b) => b.height - a.height);
+  @computed()
+  private get _dendrogramHeight(): number {
+    return calcDendrogragramListMaxHeight(this._dendrogramList);
   }
 
+  @computed()
+  private get _drawWidth(): number {
+    return this._dendrogramWidth + 2 * this.xShift;
+  }
+
+  @computed()
+  private get _drawHeight(): number {
+    return this._dendrogramHeight + 2 * this.yShift;
+  }
+
+  @computed()
+  private get _viewboxWidth(): number {
+    return this._horizontal ? this._drawWidth : this._drawHeight;
+  }
+
+  @computed()
+  private get _viewboxHeight(): number {
+    return this._horizontal ? this._drawHeight : this._drawWidth;
+  }
+
+  @computed()
   private get _transformCoords(): (point: Point) => Point {
     if (this.side === Side.top) {
       return (point: Point): Point => ({
@@ -432,19 +425,69 @@ export class BiowcHeatmapDendrogram extends LitElement {
     });
   }
 
-  private get _drawWidth(): number {
-    return this._dendrogramWidth + 2 * this.xShift;
+  @computed()
+  private get _dendrogramPaths(): DendrogramPath[] {
+    const list = this._dendrogramList;
+    const paths: DendrogramPath[] = [];
+
+    for (const entry of list) {
+      const { left, right, height, isLeftDendrogram, isRightDendrogram } =
+        entry;
+
+      const leftBoundary = entry.leftBoundary!;
+      const rightBoundary = entry.rightBoundary!;
+
+      const leftPos = isLeftDendrogram ? list[left].center! : left;
+      const rightPos = isRightDendrogram ? list[right].center! : right;
+
+      const leftHeight = isLeftDendrogram ? list[left].height : -this.yShift;
+      const rightHeight = isRightDendrogram ? list[right].height : -this.yShift;
+
+      paths.push({
+        bottomLeft: { x: leftPos, y: leftHeight },
+        bottomRight: { x: rightPos, y: rightHeight },
+        topLeft: { x: leftPos, y: height },
+        topRight: { x: rightPos, y: height },
+        leftBoundary,
+        rightBoundary,
+        height,
+      });
+    }
+
+    return paths.sort((a, b) => b.height - a.height);
   }
 
-  private get _drawHeight(): number {
-    return this._dendrogramHeight + 2 * this.yShift;
+  @computed()
+  private get _selectedPathIndices(): Set<number> {
+    const selectedIndices = new Set<number>();
+
+    for (const [index, path] of this._dendrogramPaths.entries()) {
+      const selected =
+        this.selected.has(path.leftBoundary) &&
+        this.selected.has(path.rightBoundary);
+
+      if (selected) {
+        selectedIndices.add(index);
+      }
+    }
+
+    return selectedIndices;
   }
 
-  private get _viewboxWidth(): number {
-    return this._horizontal ? this._drawWidth : this._drawHeight;
-  }
+  @computed()
+  private get _hoveredPathIndices(): Set<number> {
+    const hoveredIndices = new Set<number>();
 
-  private get _viewboxHeight(): number {
-    return this._horizontal ? this._drawHeight : this._drawWidth;
+    for (const [index, path] of this._dendrogramPaths.entries()) {
+      const hovered =
+        path.leftBoundary >= this._hoverLeftBoundary &&
+        path.rightBoundary <= this._hoverRightBoundary;
+
+      if (hovered) {
+        hoveredIndices.add(index);
+      }
+    }
+
+    return hoveredIndices;
   }
 }

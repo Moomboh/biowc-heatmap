@@ -13,7 +13,7 @@ svg {
     display: block;
 }
 
-path {
+.dendrogram-path {
     stroke: black;
     fill: transparent;
     stroke-width: 1px;
@@ -21,18 +21,18 @@ path {
     cursor: pointer;
 }
 
-path.hovered {
-    stroke: var(--biowc-heatmap-dendrogram-hovered-stroke, #8888ff);
-}
-
-path.selected {
-    stroke-width: 3px;
-}
-
-line {
+.selection-marker {
     stroke: black;
     fill: transparent;
     stroke-width: 6px;
     vector-effect: non-scaling-stroke;
 }
+
+.dendrogram-path.hovered,
+.selection-marker.hovered {
+    stroke: var(--biowc-heatmap-dendrogram-hovered-stroke, #8888ff);
+}
+
+path.selected {
+    stroke-width: 3px;
 `;
