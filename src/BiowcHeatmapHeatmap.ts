@@ -2,6 +2,7 @@ import { svg, LitElement, SVGTemplateResult } from 'lit';
 import { property } from 'lit/decorators.js';
 import { colorScale } from './util/colors.js';
 import styles from './biowc-heatmap-heatmap.css.js';
+import { computed } from './util/computedDecorator.js';
 
 export class BiowcHeatmapHeatmap extends LitElement {
   static styles = styles;
@@ -46,10 +47,12 @@ export class BiowcHeatmapHeatmap extends LitElement {
     `;
   }
 
+  @computed()
   private get _nRows(): number {
     return this.data.length;
   }
 
+  @computed()
   private get _nCols(): number {
     if (this._nRows === 0) {
       return 0;

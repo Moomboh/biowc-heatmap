@@ -7,6 +7,7 @@ const demoData = await fetchDemoData();
 render(
   html`
     <biowc-heatmap
+        id="heatmap"
         .data=${demoData.data}
         .labels=${{
           top: demoData.xLabels,
