@@ -22,7 +22,7 @@ path {
 }
 
 path.hovered {
-    stroke: blue;
+    stroke: var(--biowc-heatmap-dendrogram-hovered-stroke, #8888ff);
 }
 
 path.selected {
