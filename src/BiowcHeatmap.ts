@@ -124,12 +124,19 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
   private _setComputedStyleProps() {
     for (const side of Object.keys(Side)) {
+      const labelSizeProp = `--biowc-heatmap-labels-${side}-size`;
+      const dendrogramSizeProp = `--biowc-heatmap-dendrogram-${side}-size`;
+
       if (!this._hasSideLabels[side]) {
-        this.style.setProperty(`--biowc-heatmap-labels-${side}-size`, '0');
+        this.style.setProperty(labelSizeProp, '0');
+      } else {
+        this.style.removeProperty(labelSizeProp);
       }
 
       if (!this._hasSideDendrogram[side]) {
-        this.style.setProperty(`--biowc-heatmap-dendrogram-${side}-size`, '0');
+        this.style.setProperty(dendrogramSizeProp, '0');
+      } else {
+        this.style.removeProperty(dendrogramSizeProp);
       }
     }
   }
