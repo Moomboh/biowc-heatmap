@@ -1,5 +1,11 @@
 import { html, LitElement, HTMLTemplateResult } from 'lit';
-import { property, query, queryAll, state } from 'lit/decorators.js';
+import {
+  eventOptions,
+  property,
+  query,
+  queryAll,
+  state,
+} from 'lit/decorators.js';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 import styles from './biowc-heatmap.css.js';
 import { BiowcHeatmapHeatmap } from './BiowcHeatmapHeatmap.js';
@@ -299,7 +305,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   }
 
   private async _onWheel(event: WheelEvent) {
-    // TODO: improve zoom performance and fix issues like being able to zoom out too much
     if (event.ctrlKey) {
       event.preventDefault();
 
@@ -333,6 +338,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     }
   }
 
+  @eventOptions({ passive: true })
   private _onHeatmapScroll() {
     const scrollTop = this._heatmapWrapperElement?.scrollTop ?? 0;
     const scrollLeft = this._heatmapWrapperElement?.scrollLeft ?? 0;

@@ -38,32 +38,17 @@ export default css`
 
 .heatmap {
     overflow: auto;
-    will-change: scroll-position;
     grid-area: heatmap;
 }
 
 .labels {
     overflow: hidden;
-    will-change: scroll-position;
     scrollbar-color: transparent, transparent;
 }
 
 .dendrogram {
     overflow: hidden;
-    will-change: scroll-position;
     scrollbar-color: transparent, transparent;
-}
-
-.heatmap biowc-heatmap-heatmap {
-    will-change: width, height;
-}
-
-.dendrogram biowc-heatmap-dendrogram {
-    will-change: width, height;
-}
-
-.labels biowc-heatmap-labels {
-    will-change: width, height;
 }
 
 .labels-top {
