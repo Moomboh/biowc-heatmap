@@ -3,12 +3,7 @@ import {
   DendrogramNode,
 } from '../src/BiowcHeatmapDendrogram.js';
 
-const PRDB_DATA_URL =
-  'https://www.proteomicsdb.org/proteomicsdb/logic/getExpressionProfileHeatmapCluster.xsjs?proteins=insulin&quantification=MS1&customQuantification=&biologicalSource=tissue%3Bfluid&calculationMethod=iBAQ&customCalculationMethod=&swissprotOnly=1&noIsoforms=1&omics=Proteomics&source=db&uuid=&datasetIds=&impute=0&taxcode=9606';
-// 'https://www.proteomicsdb.org/proteomicsdb/logic/getExpressionProfileHeatmapCluster.xsjs?proteins=insulin;egfr;kinase;polymerase&quantification=MS1&customQuantification=&biologicalSource=tissue%3Bfluid&calculationMethod=iBAQ&customCalculationMethod=&swissprotOnly=1&noIsoforms=1&omics=Proteomics&source=db&uuid=&datasetIds=&impute=0&taxcode=9606';
-// 'https://www.proteomicsdb.org/proteomicsdb/logic/getExpressionProfileHeatmapCluster.xsjs?proteins=insulin%3Bkinase&quantification=MS1&customQuantification=&biologicalSource=tissue%3Bfluid%3Bcell+line&calculationMethod=iBAQ&customCalculationMethod=&swissprotOnly=1&noIsoforms=1&omics=Proteomics&source=db&uuid=&datasetIds=&impute=0&taxcode=9606';
-
-interface DemoData {
+export interface DemoData {
   data: Array<Array<number>>;
   xLabels: Array<String>;
   yLabels: Array<String>;
@@ -140,8 +135,8 @@ function getData(prdbData: any): number[][] {
   return data.map(row => row.map(value => value / maxValue));
 }
 
-export async function fetchDemoData(): Promise<DemoData> {
-  const response = await fetch(PRDB_DATA_URL);
+export async function fetchDemoData(url: string): Promise<DemoData> {
+  const response = await fetch(url);
   const prdbData = await response.json();
 
   const data = getData(prdbData);

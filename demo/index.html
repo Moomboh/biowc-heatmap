@@ -5,12 +5,25 @@
   <style>
     body {
       background: #fafafa;
+      font-family: sans-serif;
+      margin: 0;
     }
 
-    #demo {
+    #buttons-container {
+      max-width: 90vw;
+      height: 6vh;
+      margin: auto;
+      padding: 1vh 1vw;
+    }
+
+    #heatmap-container {
       max-width: 90vw;
       margin: auto;
-      padding: 5vh 0;
+      padding: 1vh 1vw;
+    }
+
+    .load-data-buttons {
+      margin-bottom: 0.5em;
     }
 
     biowc-heatmap {
@@ -22,7 +35,8 @@
   </style>
 </head>
 <body>
-  <div id="demo"></div>
+  <div id="buttons-container"></div>
+  <div id="heatmap-container"></div>
   <script type="module" src="../dist/demo/app.js"></script>
 </body>
 </html>
