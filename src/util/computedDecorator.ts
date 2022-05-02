@@ -8,18 +8,6 @@ interface ComputedProperty {
 
 type ComputedPropertyMap = Map<string | symbol, ComputedProperty>;
 
-const thisPropPattern =
-  /[\s$^&*()+\-=[\]{};':"\\|,.<>/?]{1}this\s*?\.(.+?)[$^&*()+\-=[\]{};':"\\|,.<>/?]{1}/gms;
-
-function findObservedProperties(originalGetter: () => any): string[] {
-  // TODO: this is a bit hacky. We should find a more robust way for finding the
-  // properties used in the getter. This current approach might lead to race conditions
-  // if not all observed properties are either computed or reactive.
-  // The other option would be to manually specify all dependencies.
-  const matchedProps = originalGetter.toString().matchAll(thisPropPattern);
-  return [...new Set([...matchedProps].map(match => match[1].trim()))];
-}
-
 function wrapWillUpdate(target: any) {
   const targetHasWillUpdate = Object.prototype.hasOwnProperty.call(
     target,
@@ -122,7 +110,7 @@ function sortByComputedDependencies(
   );
 }
 
-export function computed(): MethodDecorator {
+export function computed(...observedProperties: string[]): MethodDecorator {
   return (
     target: any,
     propertyKey: string | symbol,
@@ -135,7 +123,6 @@ export function computed(): MethodDecorator {
     }
 
     const originalGetter = descriptor.get;
-    const observedProperties = findObservedProperties(originalGetter);
 
     const computedProperty: ComputedProperty = {
       observedProperties,

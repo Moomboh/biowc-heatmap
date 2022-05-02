@@ -47,12 +47,12 @@ export class BiowcHeatmapHeatmap extends LitElement {
     `;
   }
 
-  @computed()
+  @computed('data')
   private get _nRows(): number {
     return this.data.length;
   }
 
-  @computed()
+  @computed('_nRows', '_nCols')
   private get _nCols(): number {
     if (this._nRows === 0) {
       return 0;

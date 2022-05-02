@@ -348,12 +348,12 @@ export class BiowcHeatmapDendrogram extends LitElement {
     this.requestUpdate('selected');
   }
 
-  @computed()
+  @computed('side')
   private get _horizontal(): boolean {
     return this.side === Side.top || this.side === Side.bottom;
   }
 
-  @computed()
+  @computed('dendrogram')
   private get _dendrogramList(): DendrogramList {
     if (isDendrogramNode(this.dendrogram)) {
       return calcDendrogramListCentersAndBoundaries(
@@ -366,37 +366,37 @@ export class BiowcHeatmapDendrogram extends LitElement {
     );
   }
 
-  @computed()
+  @computed('_dendrogramList')
   private get _dendrogramWidth(): number {
     return calcDendrogramListWidth(this._dendrogramList);
   }
 
-  @computed()
+  @computed('_dendrogramList')
   private get _dendrogramHeight(): number {
     return calcDendrogragramListMaxHeight(this._dendrogramList);
   }
 
-  @computed()
+  @computed('_dendrogramWidth', 'xShift')
   private get _drawWidth(): number {
     return this._dendrogramWidth + 2 * this.xShift;
   }
 
-  @computed()
+  @computed('_dendrogramHeight', 'yShift')
   private get _drawHeight(): number {
     return this._dendrogramHeight + 2 * this.yShift;
   }
 
-  @computed()
+  @computed('_horizontal', '_drawWidth', '_drawHeight')
   private get _viewboxWidth(): number {
     return this._horizontal ? this._drawWidth : this._drawHeight;
   }
 
-  @computed()
+  @computed('_horizontal', '_drawHeight', '_drawWidth')
   private get _viewboxHeight(): number {
     return this._horizontal ? this._drawHeight : this._drawWidth;
   }
 
-  @computed()
+  @computed('side', 'xShift', 'yShift', '_viewboxWidth', '_viewboxHeight')
   private get _transformCoords(): (point: Point) => Point {
     if (this.side === Side.top) {
       return (point: Point): Point => ({
@@ -425,7 +425,7 @@ export class BiowcHeatmapDendrogram extends LitElement {
     });
   }
 
-  @computed()
+  @computed('_dendrogramList', 'yShift', 'xShift')
   private get _dendrogramPaths(): DendrogramPath[] {
     const list = this._dendrogramList;
     const paths: DendrogramPath[] = [];
@@ -457,7 +457,7 @@ export class BiowcHeatmapDendrogram extends LitElement {
     return paths.sort((a, b) => b.height - a.height);
   }
 
-  @computed()
+  @computed('_dendrogramPaths', 'selected')
   private get _selectedPathIndices(): Set<number> {
     const selectedIndices = new Set<number>();
 
@@ -474,7 +474,7 @@ export class BiowcHeatmapDendrogram extends LitElement {
     return selectedIndices;
   }
 
-  @computed()
+  @computed('_dendrogramPaths', '_hoverLeftBoundary', '_hoverRightBoundary')
   private get _hoveredPathIndices(): Set<number> {
     const hoveredIndices = new Set<number>();
 
