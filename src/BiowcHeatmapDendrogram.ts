@@ -33,6 +33,15 @@ export interface DendrogramEntry {
 
 export type DendrogramList = DendrogramEntry[];
 
+export type DendrogramHoverEvent = CustomEvent<{
+  leftBoundary: number | null;
+  rightBoundary: number | null;
+}>;
+
+export type DendrogramSelectEvent = CustomEvent<{
+  selected: Set<number>;
+}>;
+
 type Point = { x: number; y: number };
 interface DendrogramPath {
   bottomLeft: Point;
@@ -41,6 +50,8 @@ interface DendrogramPath {
   topRight: Point;
   leftBoundary: number;
   rightBoundary: number;
+  isLeftDendrogram: boolean;
+  isRightDendrogram: boolean;
   height: number;
 }
 
@@ -204,10 +215,10 @@ export class BiowcHeatmapDendrogram extends LitElement {
   selected: Set<number> = new Set();
 
   @state()
-  private _hoverLeftBoundary = 0;
+  private _hoverLeftBoundary: number | null = null;
 
   @state()
-  private _hoverRightBoundary = 0;
+  private _hoverRightBoundary: number | null = null;
 
   render(): SVGTemplateResult {
     if (this._dendrogramList.length === 0) {
@@ -284,8 +295,8 @@ export class BiowcHeatmapDendrogram extends LitElement {
           selection-marker
           ${this.selected.has(index) ? 'selected' : ''}
           ${
-            this._hoverLeftBoundary <= index &&
-            this._hoverRightBoundary >= index
+            (this._hoverLeftBoundary ?? Infinity) <= index &&
+            (this._hoverRightBoundary ?? -Infinity) >= index
               ? 'hovered'
               : ''
           }
@@ -303,31 +314,41 @@ export class BiowcHeatmapDendrogram extends LitElement {
       this._hoverLeftBoundary = leftBoundary;
       this._hoverRightBoundary = rightBoundary;
 
-      const pathHoverEvent = new CustomEvent('biowc-heatmap-dendrogram-hover', {
-        detail: {
-          leftBoundary,
-          rightBoundary,
-        },
-      });
+      const pathHoverEvent: DendrogramHoverEvent = new CustomEvent(
+        'biowc-heatmap-dendrogram-hover',
+        {
+          detail: {
+            leftBoundary,
+            rightBoundary,
+          },
+        }
+      );
 
       this.dispatchEvent(pathHoverEvent);
     };
   }
 
   private _onPathMouseleave() {
-    this._hoverLeftBoundary = 0;
-    this._hoverRightBoundary = 0;
+    this._hoverLeftBoundary = null;
+    this._hoverRightBoundary = null;
 
-    const hoverEvent = new CustomEvent('biowc-heatmap-dendrogram-hover', {
-      detail: {
-        leftBoundary: 0,
-        rightBoundary: 0,
-      },
-    });
+    const hoverEvent: DendrogramHoverEvent = new CustomEvent(
+      'biowc-heatmap-dendrogram-hover',
+      {
+        detail: {
+          leftBoundary: null,
+          rightBoundary: null,
+        },
+      }
+    );
     this.dispatchEvent(hoverEvent);
   }
 
   private _onPathClick() {
+    if (this._hoverLeftBoundary === null || this._hoverRightBoundary === null) {
+      return;
+    }
+
     const hovered = range(this._hoverLeftBoundary, this._hoverRightBoundary);
 
     if (hovered.every(x => this.selected.has(x))) {
@@ -338,11 +359,14 @@ export class BiowcHeatmapDendrogram extends LitElement {
       });
     }
 
-    const selectedEvent = new CustomEvent('biowc-heatmap-dendrogram-select', {
-      detail: {
-        selected: this.selected,
-      },
-    });
+    const selectedEvent: DendrogramSelectEvent = new CustomEvent(
+      'biowc-heatmap-dendrogram-select',
+      {
+        detail: {
+          selected: this.selected,
+        },
+      }
+    );
     this.dispatchEvent(selectedEvent);
 
     this.requestUpdate('selected');
@@ -450,6 +474,8 @@ export class BiowcHeatmapDendrogram extends LitElement {
         topRight: { x: rightPos, y: height },
         leftBoundary,
         rightBoundary,
+        isLeftDendrogram,
+        isRightDendrogram,
         height,
       });
     }
@@ -463,8 +489,10 @@ export class BiowcHeatmapDendrogram extends LitElement {
 
     for (const [index, path] of this._dendrogramPaths.entries()) {
       const selected =
-        this.selected.has(path.leftBoundary) &&
-        this.selected.has(path.rightBoundary);
+        (this.selected.has(path.leftBoundary) &&
+          this.selected.has(path.rightBoundary)) ||
+        (this.selected.has(path.leftBoundary) && !path.isLeftDendrogram) ||
+        (this.selected.has(path.rightBoundary) && !path.isRightDendrogram);
 
       if (selected) {
         selectedIndices.add(index);
@@ -480,8 +508,8 @@ export class BiowcHeatmapDendrogram extends LitElement {
 
     for (const [index, path] of this._dendrogramPaths.entries()) {
       const hovered =
-        path.leftBoundary >= this._hoverLeftBoundary &&
-        path.rightBoundary <= this._hoverRightBoundary;
+        path.leftBoundary >= (this._hoverLeftBoundary ?? Infinity) &&
+        path.rightBoundary <= (this._hoverRightBoundary ?? -Infinity);
 
       if (hovered) {
         hoveredIndices.add(index);

@@ -13,9 +13,19 @@ export class BiowcHeatmapHeatmap extends LitElement {
   @property({ attribute: false })
   color: string = '#b40000';
 
-  render(): SVGTemplateResult {
-    const scale = colorScale(this.color);
+  @property({ attribute: false })
+  hoveredRows: number[] = [];
 
+  @property({ attribute: false })
+  hoveredCols: number[] = [];
+
+  @property({ attribute: false })
+  selectedRows: number[] = [];
+
+  @property({ attribute: false })
+  selectedCols: number[] = [];
+
+  render(): SVGTemplateResult {
     return svg`
       <svg
         width="100%"
@@ -23,27 +33,77 @@ export class BiowcHeatmapHeatmap extends LitElement {
         preserveAspectRatio="none"
         viewBox="0 0 ${this._nCols} ${this._nRows}"
       >
-        ${this.data.map(
-          (row, y) => svg`
-          ${row.map((value, x) => {
-            if (value > 0) {
-              return svg`
-                <rect
-                  @mouseover=${this._onHoverCell}
-                  @mouseleave=${this._onMouseLeave}
-                  x="${x}"
-                  y="${y}"
-                  width="1"
-                  height="1"
-                  fill="${scale(value)}"
-                  class="cell"
-                />`;
-            }
-
-            return svg``;
-          })}`
-        )}
+        ${this._renderCells()}
+        ${this._renderOverlays()}
       </svg>
+    `;
+  }
+
+  private _renderCells(): SVGTemplateResult[] {
+    return this.data.map(
+      (row, y) => svg`
+        ${row.map((value, x) => this._renderCell(x, y, value))})}
+      `
+    );
+  }
+
+  private _renderOverlays(): SVGTemplateResult[] {
+    return [
+      ...this.hoveredRows.map(row =>
+        this._renderRowOverlay(row, 'hover-overlay')
+      ),
+      ...this.hoveredCols.map(col =>
+        this._renderColOverlay(col, 'hover-overlay')
+      ),
+      ...this.selectedRows.map(row =>
+        this._renderRowOverlay(row, 'selected-overlay')
+      ),
+      ...this.selectedCols.map(col =>
+        this._renderColOverlay(col, 'selected-overlay')
+      ),
+    ];
+  }
+
+  private _renderCell(x: number, y: number, value: number): SVGTemplateResult {
+    if (value > 0) {
+      return svg`
+        <rect
+          @mouseover=${this._onHoverCell}
+          @mouseleave=${this._onMouseLeave}
+          x="${x}"
+          y="${y}"
+          width="1"
+          height="1"
+          fill="${this._colorScale(value)}"
+          class="cell"
+        />
+        `;
+    }
+
+    return svg``;
+  }
+
+  private _renderRowOverlay(row: number, cssClass: string): SVGTemplateResult {
+    return svg`
+      <rect
+        x="0"
+        y="${row}"
+        width="${this._nCols}"
+        height="1"
+        class="${cssClass}"
+      />
+    `;
+  }
+
+  private _renderColOverlay(col: number, cssClass: string): SVGTemplateResult {
+    return svg`
+      <rect
+        x="${col}"
+        y="0"
+        width="1"
+        height="${this._nRows}"
+        class="${cssClass}"
+      />
     `;
   }
 
@@ -58,6 +118,11 @@ export class BiowcHeatmapHeatmap extends LitElement {
       return 0;
     }
     return this.data[0].length;
+  }
+
+  @computed('color')
+  private get _colorScale() {
+    return colorScale(this.color);
   }
 
   private _onHoverCell(event: Event) {

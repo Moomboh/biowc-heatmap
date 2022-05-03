@@ -18,6 +18,14 @@ svg {
 }
 
 .cell:hover {
-    fill: var(--biowc-heatmap-heatmap-hover-border-color, rgba(127, 127, 255, 1));
+    filter: hue-rotate(-90deg);
 }
+
+.hover-overlay {
+    fill: var(--biowc-heatmap-heatmap-hover-overlay-color, rgba(127, 127, 255, 0.4));
+}
+
+.selected-overlay {
+    fill: var(--biowc-heatmap-heatmap-selected-overlay-color, rgba(127, 127, 255, 0.2));
+} 
 `;
