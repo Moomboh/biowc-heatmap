@@ -4,6 +4,11 @@ import { colorScale } from './util/colors.js';
 import styles from './biowc-heatmap-heatmap.css.js';
 import { computed } from './util/computedDecorator.js';
 
+export type CellHoverEvent = CustomEvent<{
+  x: number | null;
+  y: number | null;
+}>;
+
 export class BiowcHeatmapHeatmap extends LitElement {
   static styles = styles;
 
@@ -14,16 +19,16 @@ export class BiowcHeatmapHeatmap extends LitElement {
   color: string = '#b40000';
 
   @property({ attribute: false })
-  hoveredRows: number[] = [];
+  hoveredRows: Set<number> = new Set();
 
   @property({ attribute: false })
-  hoveredCols: number[] = [];
+  hoveredCols: Set<number> = new Set();
 
   @property({ attribute: false })
-  selectedRows: number[] = [];
+  selectedRows: Set<number> = new Set();
 
   @property({ attribute: false })
-  selectedCols: number[] = [];
+  selectedCols: Set<number> = new Set();
 
   render(): SVGTemplateResult {
     return svg`
@@ -49,16 +54,16 @@ export class BiowcHeatmapHeatmap extends LitElement {
 
   private _renderOverlays(): SVGTemplateResult[] {
     return [
-      ...this.hoveredRows.map(row =>
+      ...[...this.hoveredRows].map(row =>
         this._renderRowOverlay(row, 'hover-overlay')
       ),
-      ...this.hoveredCols.map(col =>
+      ...[...this.hoveredCols].map(col =>
         this._renderColOverlay(col, 'hover-overlay')
       ),
-      ...this.selectedRows.map(row =>
+      ...[...this.selectedRows].map(row =>
         this._renderRowOverlay(row, 'selected-overlay')
       ),
-      ...this.selectedCols.map(col =>
+      ...[...this.selectedCols].map(col =>
         this._renderColOverlay(col, 'selected-overlay')
       ),
     ];
@@ -128,23 +133,29 @@ export class BiowcHeatmapHeatmap extends LitElement {
   private _onHoverCell(event: Event) {
     const target = event.target as SVGRectElement;
 
-    const cellHoverEvent = new CustomEvent('biowc-heatmap-cell-hover', {
-      detail: {
-        x: target?.x.baseVal.value,
-        y: target?.y.baseVal.value,
-      },
-    });
+    const cellHoverEvent: CellHoverEvent = new CustomEvent(
+      'biowc-heatmap-cell-hover',
+      {
+        detail: {
+          x: target?.x.baseVal.value,
+          y: target?.y.baseVal.value,
+        },
+      }
+    );
 
     this.dispatchEvent(cellHoverEvent);
   }
 
   private _onMouseLeave() {
-    const cellHoverEvent = new CustomEvent('biowc-heatmap-cell-hover', {
-      detail: {
-        x: null,
-        y: null,
-      },
-    });
+    const cellHoverEvent: CellHoverEvent = new CustomEvent(
+      'biowc-heatmap-cell-hover',
+      {
+        detail: {
+          x: null,
+          y: null,
+        },
+      }
+    );
 
     this.dispatchEvent(cellHoverEvent);
   }

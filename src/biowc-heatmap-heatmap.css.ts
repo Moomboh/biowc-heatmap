@@ -22,10 +22,12 @@ svg {
 }
 
 .hover-overlay {
+    pointer-events: none;
     fill: var(--biowc-heatmap-heatmap-hover-overlay-color, rgba(127, 127, 255, 0.4));
 }
 
 .selected-overlay {
+    pointer-events: none;
     fill: var(--biowc-heatmap-heatmap-selected-overlay-color, rgba(127, 127, 255, 0.2));
 } 
 `;

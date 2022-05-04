@@ -1,3 +1,4 @@
+/* eslint-disable lit-a11y/click-events-have-key-events */
 import { LitElement, HTMLTemplateResult, html } from 'lit';
 import { property } from 'lit/decorators.js';
 import styles from './biowc-heatmap-labels.css.js';
@@ -7,6 +8,14 @@ export enum TextAlign {
   center = 'center',
   right = 'right',
 }
+
+export type LabelHoverEvent = CustomEvent<{
+  hovered: Set<number>;
+}>;
+
+export type LabelSelectEvent = CustomEvent<{
+  selected: Set<number>;
+}>;
 
 export class BiowcHeatmapLabels extends LitElement {
   static styles = styles;
@@ -24,7 +33,10 @@ export class BiowcHeatmapLabels extends LitElement {
   labels: string[] = [];
 
   @property({ attribute: false })
-  hoveredIndex: number | null = null;
+  hoveredIndices: Set<number> = new Set();
+
+  @property({ attribute: false })
+  selectedIndices: Set<number> = new Set();
 
   private _resizeObserver: ResizeObserver | undefined;
 
@@ -57,10 +69,14 @@ export class BiowcHeatmapLabels extends LitElement {
       ${this.labels.map(
         (label, index) => html`
           <div
+            @mouseenter=${this._onMouseEnter(index)}
+            @mouseleave=${this._onMouseLeave}
+            @click=${this._onClick}
             class="
               label
               align-${this.textalign}
-              ${index === this.hoveredIndex ? 'hover' : ''}
+              ${this.hoveredIndices.has(index) ? 'hover' : ''}
+              ${this.selectedIndices.has(index) ? 'selected' : ''}
             "
           >
             ${label}
@@ -68,5 +84,58 @@ export class BiowcHeatmapLabels extends LitElement {
         `
       )}
     `;
+  }
+
+  private _onMouseEnter(index: number) {
+    return () => {
+      this.hoveredIndices = new Set([index]);
+      this._dispatchHoverEvent();
+    };
+  }
+
+  private _onMouseLeave() {
+    this.hoveredIndices = new Set();
+    this._dispatchHoverEvent();
+  }
+
+  private _onClick() {
+    const hovered = [...this.hoveredIndices];
+    const selected: Set<number> = new Set([...this.selectedIndices]);
+
+    if (hovered.every(x => selected.has(x))) {
+      hovered.forEach(x => {
+        selected.delete(x);
+      });
+    } else {
+      hovered.forEach(x => {
+        selected.add(x);
+      });
+    }
+
+    this.selectedIndices = selected;
+
+    const clickEvent: LabelSelectEvent = new CustomEvent(
+      'biowc-heatmap-label-select',
+      {
+        detail: {
+          selected: this.selectedIndices,
+        },
+      }
+    );
+
+    this.dispatchEvent(clickEvent);
+  }
+
+  private _dispatchHoverEvent() {
+    const hoverEvent: LabelHoverEvent = new CustomEvent(
+      'biowc-heatmap-label-hover',
+      {
+        detail: {
+          hovered: this.hoveredIndices,
+        },
+      }
+    );
+
+    this.dispatchEvent(hoverEvent);
   }
 }

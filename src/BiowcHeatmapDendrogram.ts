@@ -1,5 +1,5 @@
 import { LitElement, svg, SVGTemplateResult } from 'lit';
-import { property, state } from 'lit/decorators.js';
+import { property } from 'lit/decorators.js';
 import styles from './biowc-heatmap-dendrogram.css.js';
 import { Side } from './BiowcHeatmap.js';
 import range from './util/range.js';
@@ -34,8 +34,7 @@ export interface DendrogramEntry {
 export type DendrogramList = DendrogramEntry[];
 
 export type DendrogramHoverEvent = CustomEvent<{
-  leftBoundary: number | null;
-  rightBoundary: number | null;
+  hovered: Set<number>;
 }>;
 
 export type DendrogramSelectEvent = CustomEvent<{
@@ -212,13 +211,10 @@ export class BiowcHeatmapDendrogram extends LitElement {
   selectionMarkerWidth = 0.8;
 
   @property({ attribute: false })
-  selected: Set<number> = new Set();
+  selectedIndices: Set<number> = new Set();
 
-  @state()
-  private _hoverLeftBoundary: number | null = null;
-
-  @state()
-  private _hoverRightBoundary: number | null = null;
+  @property({ attribute: false })
+  hoveredIndices: Set<number> = new Set();
 
   render(): SVGTemplateResult {
     if (this._dendrogramList.length === 0) {
@@ -235,7 +231,7 @@ export class BiowcHeatmapDendrogram extends LitElement {
         ${this._dendrogramPaths.map((path, index) =>
           this._renderPath(path, index)
         )}
-        ${[...this.selected].map(index => this._renderSelected(index))}]}
+        ${[...this.selectedIndices].map(index => this._renderSelected(index))}]}
       </svg>
     `;
   }
@@ -293,13 +289,8 @@ export class BiowcHeatmapDendrogram extends LitElement {
       <line
         class="
           selection-marker
-          ${this.selected.has(index) ? 'selected' : ''}
-          ${
-            (this._hoverLeftBoundary ?? Infinity) <= index &&
-            (this._hoverRightBoundary ?? -Infinity) >= index
-              ? 'hovered'
-              : ''
-          }
+          ${this.hoveredIndices.has(index) ? 'hovered' : ''}
+          ${this.selectedIndices.has(index) ? 'selected' : ''}
         "
         x1="${from.x}"
         y1="${from.y}"
@@ -311,65 +302,54 @@ export class BiowcHeatmapDendrogram extends LitElement {
 
   private _onPathMouseenter(leftBoundary: number, rightBoundary: number) {
     return () => {
-      this._hoverLeftBoundary = leftBoundary;
-      this._hoverRightBoundary = rightBoundary;
-
-      const pathHoverEvent: DendrogramHoverEvent = new CustomEvent(
-        'biowc-heatmap-dendrogram-hover',
-        {
-          detail: {
-            leftBoundary,
-            rightBoundary,
-          },
-        }
-      );
-
-      this.dispatchEvent(pathHoverEvent);
+      this.hoveredIndices = new Set([...range(leftBoundary, rightBoundary)]);
+      this._dispatchHoverEvent();
     };
   }
 
   private _onPathMouseleave() {
-    this._hoverLeftBoundary = null;
-    this._hoverRightBoundary = null;
-
-    const hoverEvent: DendrogramHoverEvent = new CustomEvent(
-      'biowc-heatmap-dendrogram-hover',
-      {
-        detail: {
-          leftBoundary: null,
-          rightBoundary: null,
-        },
-      }
-    );
-    this.dispatchEvent(hoverEvent);
+    this.hoveredIndices = new Set();
+    this._dispatchHoverEvent();
   }
 
   private _onPathClick() {
-    if (this._hoverLeftBoundary === null || this._hoverRightBoundary === null) {
-      return;
-    }
+    const hovered = [...this.hoveredIndices];
+    const selected: Set<number> = new Set([...this.selectedIndices]);
 
-    const hovered = range(this._hoverLeftBoundary, this._hoverRightBoundary);
-
-    if (hovered.every(x => this.selected.has(x))) {
-      hovered.forEach(x => this.selected.delete(x));
+    if (hovered.every(x => selected.has(x))) {
+      hovered.forEach(x => {
+        selected.delete(x);
+      });
     } else {
       hovered.forEach(x => {
-        this.selected.add(x);
+        selected.add(x);
       });
     }
+
+    this.selectedIndices = selected;
 
     const selectedEvent: DendrogramSelectEvent = new CustomEvent(
       'biowc-heatmap-dendrogram-select',
       {
         detail: {
-          selected: this.selected,
+          selected: this.selectedIndices,
         },
       }
     );
     this.dispatchEvent(selectedEvent);
+  }
 
-    this.requestUpdate('selected');
+  private _dispatchHoverEvent() {
+    const hoverEvent: DendrogramHoverEvent = new CustomEvent(
+      'biowc-heatmap-dendrogram-hover',
+      {
+        detail: {
+          hovered: this.hoveredIndices,
+        },
+      }
+    );
+
+    this.dispatchEvent(hoverEvent);
   }
 
   @computed('side')
@@ -483,16 +463,18 @@ export class BiowcHeatmapDendrogram extends LitElement {
     return paths.sort((a, b) => b.height - a.height);
   }
 
-  @computed('_dendrogramPaths', 'selected')
+  @computed('_dendrogramPaths', 'selectedIndices')
   private get _selectedPathIndices(): Set<number> {
     const selectedIndices = new Set<number>();
 
     for (const [index, path] of this._dendrogramPaths.entries()) {
       const selected =
-        (this.selected.has(path.leftBoundary) &&
-          this.selected.has(path.rightBoundary)) ||
-        (this.selected.has(path.leftBoundary) && !path.isLeftDendrogram) ||
-        (this.selected.has(path.rightBoundary) && !path.isRightDendrogram);
+        (this.selectedIndices.has(path.leftBoundary) &&
+          this.selectedIndices.has(path.rightBoundary)) ||
+        (this.selectedIndices.has(path.leftBoundary) &&
+          !path.isLeftDendrogram) ||
+        (this.selectedIndices.has(path.rightBoundary) &&
+          !path.isRightDendrogram);
 
       if (selected) {
         selectedIndices.add(index);
@@ -502,14 +484,14 @@ export class BiowcHeatmapDendrogram extends LitElement {
     return selectedIndices;
   }
 
-  @computed('_dendrogramPaths', '_hoverLeftBoundary', '_hoverRightBoundary')
+  @computed('_dendrogramPaths', 'hoveredIndices')
   private get _hoveredPathIndices(): Set<number> {
     const hoveredIndices = new Set<number>();
 
     for (const [index, path] of this._dendrogramPaths.entries()) {
       const hovered =
-        path.leftBoundary >= (this._hoverLeftBoundary ?? Infinity) &&
-        path.rightBoundary <= (this._hoverRightBoundary ?? -Infinity);
+        this.hoveredIndices.has(path.leftBoundary) &&
+        this.hoveredIndices.has(path.rightBoundary);
 
       if (hovered) {
         hoveredIndices.add(index);

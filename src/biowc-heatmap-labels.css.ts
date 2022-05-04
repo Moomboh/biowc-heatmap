@@ -27,7 +27,11 @@ export default css`
 }
 
 .label.hover {
-    background: var(--biowc-heatmap-labels-hover-background-color, rgba(127, 127, 255, 1));
+    background: var(--biowc-heatmap-labels-hover-background, rgba(127, 127, 255, 0.2)) !important;
+}
+
+.label.selected {
+    background: var(--biowc-heatmap-labels-selected-background, rgba(127, 127, 255, 0.4));
 }
 
 :host([horizontal]) .label {
