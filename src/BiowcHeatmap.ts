@@ -1,11 +1,5 @@
 import { html, LitElement, HTMLTemplateResult } from 'lit';
-import {
-  eventOptions,
-  property,
-  query,
-  queryAll,
-  state,
-} from 'lit/decorators.js';
+import { eventOptions, property, query, queryAll } from 'lit/decorators.js';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 import styles from './biowc-heatmap.css.js';
 import { BiowcHeatmapHeatmap } from './BiowcHeatmapHeatmap.js';
@@ -80,13 +74,13 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   color: String = '#b40000';
 
   @property({ type: Number })
-  gutter: number = 0.02;
-
-  @property({ type: Number })
   zoomX = 1;
 
   @property({ type: Number })
   zoomY = 1;
+
+  @property({ type: Number })
+  zoomFactor = 1.25;
 
   @property({ attribute: false })
   data: number[][] = [];
@@ -120,19 +114,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   // eslint-disable-next-line no-undef
   private _verticalWrappers: NodeListOf<HTMLElement> | undefined;
 
-  @state()
-  private _heatmapWrapperWidth: number = 1;
-
-  @state()
-  private _heatmapWrapperHeight: number = 1;
-
-  private _resizeObserver: ResizeObserver | undefined;
-
   constructor() {
     super();
     this.addEventListener('wheel', this._onWheel);
-    this._resizeObserver = new ResizeObserver(this._onResize.bind(this));
-    this._resizeObserver.observe(this);
   }
 
   render(): HTMLTemplateResult {
@@ -143,11 +127,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
       ${this._renderSideLabels()}
       ${this._renderDendrograms()}
     `;
-  }
-
-  private _onResize() {
-    this._heatmapWrapperWidth = this._heatmapWrapperElement?.clientWidth ?? 1;
-    this._heatmapWrapperHeight = this._heatmapWrapperElement?.clientHeight ?? 1;
   }
 
   private _setComputedStyleProps() {
@@ -182,8 +161,8 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
           .selectedCols=${this.selectedCols}
           @biowc-heatmap-cell-hover=${this._onCellHover}
           style="
-            width: ${this._fittedZoomX * 100}%;
-            height: ${this._fittedZoomY * 100}%;
+            width: ${this.zoomX * 100}%;
+            height: ${this.zoomY * 100}%;
           "
         ></biowc-heatmap-heatmap>
       </div>
@@ -201,11 +180,11 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
         let scrollBarsStyle = '';
 
-        if (this._fittedZoomY > 1 && horizontal) {
+        if (this.zoomY > 1 && horizontal) {
           scrollBarsStyle = 'overflow-y: scroll';
         }
 
-        if (this._fittedZoomX > 1 && !horizontal) {
+        if (this.zoomX > 1 && !horizontal) {
           scrollBarsStyle = 'overflow-x: scroll';
         }
 
@@ -226,8 +205,8 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
             textalign=${BiowcHeatmap.sideToTextAlign(side)}
             style="${
               horizontal
-                ? `width: ${this._fittedZoomX * 100}%`
-                : `height: ${this._fittedZoomY * 100}%`
+                ? `width: ${this.zoomX * 100}%`
+                : `height: ${this.zoomY * 100}%`
             }"
           ></biowc-heatmap-labels>
         </div>
@@ -247,11 +226,11 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
         let scrollBarsStyle = '';
 
-        if (this._fittedZoomY > 1 && horizontal) {
+        if (this.zoomY > 1 && horizontal) {
           scrollBarsStyle = 'overflow-y: scroll';
         }
 
-        if (this._fittedZoomX > 1 && !horizontal) {
+        if (this.zoomX > 1 && !horizontal) {
           scrollBarsStyle = 'overflow-x: scroll';
         }
 
@@ -272,27 +251,14 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
             yShift="0.1"
             style="${
               horizontal
-                ? `width: ${this._fittedZoomX * 100}%`
-                : `height: ${this._fittedZoomY * 100}%`
+                ? `width: ${this.zoomX * 100}%`
+                : `height: ${this.zoomY * 100}%`
             }"
           ></biowc-heatmap-dendrogram>
         </div>
         `;
       })}
     `;
-  }
-
-  @computed('data')
-  private get _nRows(): number {
-    return this.data.length;
-  }
-
-  @computed('_nRows', 'data')
-  private get _nCols(): number {
-    if (this._nRows === 0) {
-      return 0;
-    }
-    return this.data[0].length;
   }
 
   @computed('labels')
@@ -309,72 +275,16 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     );
   }
 
-  @computed('_nCols', '_nRows', '_heatmapWrapperHeight', '_heatmapWrapperWidth')
-  private get _fitZoomXFactor(): number {
-    return Math.max(
-      1,
-      (this._nCols / this._nRows) *
-        (this._heatmapWrapperHeight / this._heatmapWrapperWidth)
-    );
-  }
-
-  @computed('_nRows', '_nCols', '_heatmapWrapperWidth', '_heatmapWrapperHeight')
-  private get _fitZoomYFactor(): number {
-    return Math.max(
-      1,
-      (this._nRows / this._nCols) *
-        (this._heatmapWrapperWidth / this._heatmapWrapperHeight)
-    );
-  }
-
-  @computed('_nCols', '_nRows', 'zoomX', '_fitZoomXFactor')
-  private get _fittedZoomX() {
-    if (this._nCols > this._nRows) {
-      return this.zoomX * this._fitZoomXFactor;
-    }
-
-    return this.zoomX;
-  }
-
-  @computed('_nRows', '_nCols', 'zoomY', '_fitZoomYFactor')
-  private get _fittedZoomY() {
-    if (this._nRows > this._nCols) {
-      return this.zoomY * this._fitZoomYFactor;
-    }
-
-    return this.zoomY;
-  }
-
-  private async _onWheel(event: WheelEvent) {
+  private _onWheel(event: WheelEvent) {
     if (event.ctrlKey) {
       event.preventDefault();
-
-      const deltaZoom = -event.deltaY;
-
-      const minXzoom =
-        this._heatmapWrapperWidth / this._heatmapWrapperHeight <
-        this._nRows / this._nCols
-          ? 1
-          : 1 / this._fitZoomXFactor;
-
-      const minYzoom =
-        this._heatmapWrapperWidth / this._heatmapWrapperHeight >
-        this._nRows / this._nCols
-          ? 1
-          : 1 / this._fitZoomYFactor;
+      const deltaZoomFactor =
+        event.deltaY < 0 ? this.zoomFactor : 1 / this.zoomFactor;
 
       if (event.shiftKey) {
-        this.zoomX = Math.max(
-          minXzoom,
-          this.zoomX +
-            deltaZoom / this._heatmapWrapperWidth / this._fitZoomXFactor
-        );
+        this.zoomX = Math.max(1, this.zoomX * deltaZoomFactor);
       } else {
-        this.zoomY = Math.max(
-          minYzoom,
-          this.zoomY +
-            deltaZoom / this._heatmapWrapperHeight / this._fitZoomYFactor
-        );
+        this.zoomY = Math.max(1, this.zoomY * deltaZoomFactor);
       }
     }
   }
@@ -411,7 +321,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     };
   }
 
-  @eventOptions({ passive: true })
   private _onDendrogramHover(side: Side) {
     const horizontal = side === Side.top || side === Side.bottom;
 
@@ -428,7 +337,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     };
   }
 
-  @eventOptions({ passive: true })
   private _onDendrogramSelect(side: Side) {
     const horizontal = side === Side.top || side === Side.bottom;
 
@@ -461,7 +369,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     });
   }
 
-  @eventOptions({ passive: true })
   private _onCellHover(event: CustomEvent) {
     this.hoveredCols = new Set([event.detail.x]);
     this.hoveredRows = new Set([event.detail.y]);
