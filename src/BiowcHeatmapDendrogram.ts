@@ -1,9 +1,9 @@
 import { LitElement, svg, SVGTemplateResult } from 'lit';
 import { property } from 'lit/decorators.js';
 import styles from './biowc-heatmap-dendrogram.css.js';
-import { Side } from './BiowcHeatmap.js';
 import range from './util/range.js';
 import { computed } from './util/computedDecorator.js';
+import { Side } from './BiowcHeatmap.js';
 
 export interface DendrogramNode {
   left: DendrogramNode | number;

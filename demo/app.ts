@@ -25,10 +25,14 @@ function renderHeatmap(demoData: DemoData) {
         .labels=${{
           top: demoData.xLabels,
           left: demoData.yLabels,
+          right: demoData.yLabels,
+          bottom: demoData.xLabels,
         }}
         .dendrograms=${{
           top: demoData.xDendrogram,
           left: demoData.yDendrogram,
+          right: demoData.yDendrogram,
+          bottom: demoData.xDendrogram,
         }}
     ></biowc-heatmap>
     `,

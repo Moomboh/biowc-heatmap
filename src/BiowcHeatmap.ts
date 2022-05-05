@@ -17,6 +17,7 @@ import {
   DendrogramSelectEvent,
 } from './BiowcHeatmapDendrogram.js';
 import { computed } from './util/computedDecorator.js';
+import { BiowcHeatmapZoomContainer } from './BiowcHeatmapZoomContainer.js';
 
 export enum Side {
   top = 'top',
@@ -57,17 +58,10 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   static get scopedElements() {
     return {
       'biowc-heatmap-heatmap': BiowcHeatmapHeatmap,
-      'biowc-heatmap-labels': BiowcHeatmapLabels,
+      'biowc-heatmap-zoom-container': BiowcHeatmapZoomContainer,
       'biowc-heatmap-dendrogram': BiowcHeatmapDendrogram,
+      'biowc-heatmap-labels': BiowcHeatmapLabels,
     };
-  }
-
-  static sideToTextAlign(side: Side): TextAlign {
-    if (side === Side.left || side === Side.bottom) {
-      return TextAlign.right;
-    }
-
-    return TextAlign.left;
   }
 
   @property({ type: String })
@@ -106,13 +100,13 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   @query('.heatmap')
   private _heatmapWrapperElement: HTMLElement | undefined;
 
-  @queryAll('.labels-top, .labels-bottom, .dendrogram-top, .dendrogram-bottom')
+  @queryAll('.top-container, .bottom-container')
   // eslint-disable-next-line no-undef
-  private _horizontalWrappers: NodeListOf<HTMLElement> | undefined;
+  private _horizontalContainers: NodeListOf<HTMLElement> | undefined;
 
-  @queryAll('.labels-left, .labels-right, .dendrogram-left, .dendrogram-right')
+  @queryAll('.left-container, .right-container')
   // eslint-disable-next-line no-undef
-  private _verticalWrappers: NodeListOf<HTMLElement> | undefined;
+  private _verticalContainers: NodeListOf<HTMLElement> | undefined;
 
   constructor() {
     super();
@@ -124,26 +118,18 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     return html`
       ${this._renderHeatmap()}
-      ${this._renderSideLabels()}
-      ${this._renderDendrograms()}
+      ${this._renderSides()}
     `;
   }
 
   private _setComputedStyleProps() {
     for (const side of Object.keys(Side)) {
-      const labelSizeProp = `--biowc-heatmap-labels-${side}-size`;
-      const dendrogramSizeProp = `--biowc-heatmap-dendrogram-${side}-size`;
+      const sideSizeProp = `--biowc-heatmap-${side}-size`;
 
-      if (!this._hasSideLabels[side]) {
-        this.style.setProperty(labelSizeProp, '0');
+      if (!this._hasSideLabels[side] && !this._hasSideDendrogram[side]) {
+        this.style.setProperty(sideSizeProp, '0');
       } else {
-        this.style.removeProperty(labelSizeProp);
-      }
-
-      if (!this._hasSideDendrogram[side]) {
-        this.style.setProperty(dendrogramSizeProp, '0');
-      } else {
-        this.style.removeProperty(dendrogramSizeProp);
+        this.style.removeProperty(sideSizeProp);
       }
     }
   }
@@ -169,7 +155,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     `;
   }
 
-  private _renderSideLabels(): HTMLTemplateResult {
+  private _renderSides(): HTMLTemplateResult {
     return html`
       ${Object.values(Side).map(side => {
         if (!this._hasSideLabels[side]) {
@@ -177,84 +163,49 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
         }
 
         const horizontal = side === Side.top || side === Side.bottom;
-
-        let scrollBarsStyle = '';
-
-        if (this.zoomY > 1 && horizontal) {
-          scrollBarsStyle = 'overflow-y: scroll';
-        }
-
-        if (this.zoomX > 1 && !horizontal) {
-          scrollBarsStyle = 'overflow-x: scroll';
-        }
+        const hoveredIndices = horizontal ? this.hoveredCols : this.hoveredRows;
+        const selectedIndices = horizontal
+          ? this.selectedCols
+          : this.selectedRows;
+        const textAlign =
+          side === Side.left || side === Side.bottom
+            ? TextAlign.right
+            : TextAlign.left;
 
         return html`
-        <div
-          style=${scrollBarsStyle}
-          class="labels labels-${side}"
-        >
-          <biowc-heatmap-labels
-            .labels=${this.labels[side]}
-            ?horizontal=${horizontal}
-            .hoveredIndices=${horizontal ? this.hoveredCols : this.hoveredRows}
-            .selectedIndices=${
-              horizontal ? this.selectedCols : this.selectedRows
-            }
-            @biowc-heatmap-label-hover=${this._onLabelHover}
-            @biowc-heatmap-label-select=${this._onLabelSelect(side)}
-            textalign=${BiowcHeatmap.sideToTextAlign(side)}
-            style="${
-              horizontal
-                ? `width: ${this.zoomX * 100}%`
-                : `height: ${this.zoomY * 100}%`
-            }"
-          ></biowc-heatmap-labels>
-        </div>
-        `;
-      })}
-    `;
-  }
-
-  private _renderDendrograms(): HTMLTemplateResult {
-    return html`
-      ${Object.values(Side).map(side => {
-        if (!this._hasSideDendrogram[side]) {
-          return html``;
-        }
-
-        const horizontal = side === Side.top || side === Side.bottom;
-
-        let scrollBarsStyle = '';
-
-        if (this.zoomY > 1 && horizontal) {
-          scrollBarsStyle = 'overflow-y: scroll';
-        }
-
-        if (this.zoomX > 1 && !horizontal) {
-          scrollBarsStyle = 'overflow-x: scroll';
-        }
-
-        return html`
-        <div
-          style=${scrollBarsStyle}
-          class="dendrogram dendrogram-${side}"
-        >
-          <biowc-heatmap-dendrogram
-            .dendrogram=${this.dendrograms[side]!}
+          <biowc-heatmap-zoom-container
             .side=${side}
-            .hoveredIndices=${horizontal ? this.hoveredCols : this.hoveredRows}
-            .selectedIndices=${
-              horizontal ? this.selectedCols : this.selectedRows
-            }
-            @biowc-heatmap-dendrogram-select=${this._onDendrogramSelect(side)}
-            @biowc-heatmap-dendrogram-hover=${this._onDendrogramHover(side)}
-            yShift="0.1"
-            style="${
-              horizontal
-                ? `width: ${this.zoomX * 100}%`
-                : `height: ${this.zoomY * 100}%`
-            }"
-          ></biowc-heatmap-dendrogram>
+            .zoomX=${this.zoomX}
+            .zoomY=${this.zoomY}
+            @wheel=${horizontal ? this._onScrollX : this._onScrollY}
+            class="container ${side}-container"
+          >
+
+              <biowc-heatmap-dendrogram
+                .dendrogram=${this.dendrograms[side]!}
+                .side=${side}
+                .hoveredIndices=${hoveredIndices}
+                .selectedIndices=${selectedIndices}
+                @biowc-heatmap-dendrogram-select=${this._onDendrogramSelect(
+                  side
+                )}
+                @biowc-heatmap-dendrogram-hover=${this._onDendrogramHover(side)}
+                yShift="0.1"
+                class="dendrogram"
+              ></biowc-heatmap-dendrogram>
+
+              <biowc-heatmap-labels
+                .labels=${this.labels[side]}
+                ?horizontal=${horizontal}
+                .hoveredIndices=${hoveredIndices}
+                .selectedIndices=${selectedIndices}
+                @biowc-heatmap-label-hover=${this._onLabelHover}
+                @biowc-heatmap-label-select=${this._onLabelSelect(side)}
+                textalign=${textAlign}
+                class="labels"
+              ></biowc-heatmap-labels>
+
+          </biowc-heatmap-zoom-container>
         </div>
         `;
       })}
@@ -358,12 +309,12 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     const scrollTop = this._heatmapWrapperElement?.scrollTop ?? 0;
     const scrollLeft = this._heatmapWrapperElement?.scrollLeft ?? 0;
 
-    this._verticalWrappers?.forEach(wrapper => {
+    this._verticalContainers?.forEach(wrapper => {
       // eslint-disable-next-line no-param-reassign
       wrapper.scrollTop = scrollTop;
     });
 
-    this._horizontalWrappers?.forEach(wrapper => {
+    this._horizontalContainers?.forEach(wrapper => {
       // eslint-disable-next-line no-param-reassign
       wrapper.scrollLeft = scrollLeft;
     });
@@ -373,6 +324,23 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     this.hoveredCols = new Set([event.detail.x]);
     this.hoveredRows = new Set([event.detail.y]);
     this._dispatchHoverEvent();
+  }
+
+  // TODO: use native scroll for smooth scrolling
+  @eventOptions({ passive: true })
+  private _onScrollX(event: WheelEvent) {
+    if (this._heatmapWrapperElement === undefined) {
+      return;
+    }
+    this._heatmapWrapperElement.scrollLeft += event.deltaX;
+  }
+
+  @eventOptions({ passive: true })
+  private _onScrollY(event: WheelEvent) {
+    if (this._heatmapWrapperElement === undefined) {
+      return;
+    }
+    this._heatmapWrapperElement.scrollTop += event.deltaY;
   }
 
   private _dispatchHoverEvent() {

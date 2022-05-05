@@ -19,7 +19,10 @@ export default css`
 }
 
 .label {
+    display: block;
     width: 100%;
+    cursor: pointer;
+    user-select: none;
     vertical-align: middle;
     white-space: nowrap;
     overflow: hidden;
