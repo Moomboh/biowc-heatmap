@@ -10,13 +10,13 @@ export default css`
     'left heatmap right'
     '.    bottom  .    ';
   grid-template-columns:
-    var(--biowc-heatmap-left-size, 200px)
+    var(--biowc-heatmap-left-size, auto)
     auto
-    var(--biowc-heatmap-right-size, 200px);
+    var(--biowc-heatmap-right-size, auto);
   grid-template-rows:
-    var(--biowc-heatmap-top-size, 200px)
+    var(--biowc-heatmap-top-size, auto)
     auto
-    var(--biowc-heatmap-bottom-size, 200px);
+    var(--biowc-heatmap-bottom-size, auto);
 }
 
 .heatmap {
@@ -29,10 +29,12 @@ export default css`
   display: grid;
   grid-template-areas: 
     "dendrogram"
-    "labels";
+    "labels"
+    "color-annot";
   grid-template-rows: 
     var(--biowc-heatmap-dendrogram-top-size, auto)
-    var(--biowc-heatmap-labels-top-size, auto);
+    var(--biowc-heatmap-labels-top-size, auto)
+    var(--biowc-heatmap-color-annot-top-size, 12px);
   grid-template-columns: 1fr;
 }
 
@@ -40,20 +42,22 @@ export default css`
   grid-area: left;
   display: grid;
   grid-template-areas: 
-    "dendrogram labels";
+    "dendrogram labels color-annot";
   grid-template-rows: 1fr;
   grid-template-columns: 
     var(--biowc-heatmap-dendrogram-left-size, auto)
-    var(--biowc-heatmap-labels-left-size, auto);
+    var(--biowc-heatmap-labels-left-size, auto)
+    var(--biowc-heatmap-color-annot-left-size, 12px);
 }
 
 .right-container {
   grid-area: right;
   display: grid;
   grid-template-areas: 
-    "labels dendrogram";
+    "color-annot labels dendrogram";
   grid-template-rows: 1fr;
   grid-template-columns: 
+    var(--biowc-heatmap-color-annot-right-size, 12px)
     var(--biowc-heatmap-labels-right-size, auto)
     var(--biowc-heatmap-dendrogram-right-size, auto);
 }
@@ -62,9 +66,11 @@ export default css`
   grid-area: bottom;
   display: grid;
   grid-template-areas: 
+    "color-annot"
     "labels"
     "dendrogram";
   grid-template-rows: 
+    var(--biowc-heatmap-color-annot-bottom-size, 12px)
     var(--biowc-heatmap-labels-bottom-size, auto)
     var(--biowc-heatmap-dendrogram-bottom-size, auto);
   grid-template-columns: 1fr;

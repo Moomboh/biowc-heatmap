@@ -4,11 +4,13 @@ import {
 } from '../src/BiowcHeatmapDendrogram.js';
 
 export interface DemoData {
-  data: Array<Array<number>>;
-  xLabels: Array<String>;
-  yLabels: Array<String>;
+  data: number[][];
+  xLabels: string[];
+  yLabels: string[];
   xDendrogram: DendrogramNode | DendrogramList;
   yDendrogram: DendrogramNode | DendrogramList;
+  xAnnotColors: string[];
+  yAnnotColors?: string[];
 }
 
 type ClusterDataEntry = [
@@ -21,7 +23,15 @@ type ClusterDataEntry = [
 
 type ClusterIdMapFunction = (id: number | string) => number;
 
-function getRowLabels(prdbData: any): Array<String> {
+type ColorMap = { [key: string]: string };
+
+const tissueColorMap: ColorMap = {
+  tissue: 'rgb(31, 119, 180)',
+  fluid: 'rgb(255, 127, 14)',
+  'cell line': 'rgb(44, 160, 44)',
+};
+
+function getRowLabels(prdbData: any): string[] {
   function getLabel(proteinId: String): String {
     const protein = prdbData.proteindata.filter(
       (proteinData: any[]) => proteinData[0] === proteinId
@@ -34,7 +44,7 @@ function getRowLabels(prdbData: any): Array<String> {
   );
 }
 
-function getColumnLabels(prdbData: any): Array<String> {
+function getColumnLabels(prdbData: any): string[] {
   function getLabel(tissueId: String): String {
     const tissue = prdbData.tissuedata.filter(
       (tissueData: any[]) => tissueData[0] === tissueId
@@ -135,6 +145,12 @@ function getData(prdbData: any): number[][] {
   return data.map(row => row.map(value => value / maxValue));
 }
 
+function getXAnnotColors(tissuedata: any) {
+  return tissuedata.map(
+    (tissueData: string[]) => tissueColorMap[tissueData[3]]
+  );
+}
+
 export async function fetchDemoData(url: string): Promise<DemoData> {
   const response = await fetch(url);
   const prdbData = await response.json();
@@ -153,11 +169,14 @@ export async function fetchDemoData(url: string): Promise<DemoData> {
     id => (prdbData.clusterdata.proteinorder as Array<any>).indexOf(id)
   );
 
+  const xAnnotColors = getXAnnotColors(prdbData.tissuedata);
+
   return {
     data,
     xLabels,
     yLabels,
     xDendrogram,
     yDendrogram,
+    xAnnotColors,
   };
 }

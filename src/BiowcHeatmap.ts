@@ -18,6 +18,7 @@ import {
 } from './BiowcHeatmapDendrogram.js';
 import { computed } from './util/computedDecorator.js';
 import { BiowcHeatmapZoomContainer } from './BiowcHeatmapZoomContainer.js';
+import { BiowcHeatmapColorAnnot } from './BiowcHeatmapColorAnnot.js';
 
 export enum Side {
   top = 'top',
@@ -32,6 +33,10 @@ export type Labels = {
 
 export type Dendrograms = {
   [key in Side]?: DendrogramNode | DendrogramList;
+};
+
+export type ColorAnnots = {
+  [key in Side]?: string[];
 };
 
 export type SideNumbers = {
@@ -61,6 +66,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
       'biowc-heatmap-zoom-container': BiowcHeatmapZoomContainer,
       'biowc-heatmap-dendrogram': BiowcHeatmapDendrogram,
       'biowc-heatmap-labels': BiowcHeatmapLabels,
+      'biowc-heatmap-color-annot': BiowcHeatmapColorAnnot,
     };
   }
 
@@ -84,6 +90,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
   @property({ attribute: false })
   dendrograms: Dendrograms = {};
+
+  @property({ attribute: false })
+  colorAnnots: ColorAnnots = {};
 
   @property({ attribute: false })
   hoveredRows: Set<number> = new Set();
@@ -126,7 +135,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     for (const side of Object.keys(Side)) {
       const sideSizeProp = `--biowc-heatmap-${side}-size`;
 
-      if (!this._hasSideLabels[side] && !this._hasSideDendrogram[side]) {
+      if (!this._hasSide[side]) {
         this.style.setProperty(sideSizeProp, '0');
       } else {
         this.style.removeProperty(sideSizeProp);
@@ -158,7 +167,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   private _renderSides(): HTMLTemplateResult {
     return html`
       ${Object.values(Side).map(side => {
-        if (!this._hasSideLabels[side]) {
+        if (!this._hasSide[side]) {
           return html``;
         }
 
@@ -180,30 +189,50 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
             @wheel=${horizontal ? this._onScrollX : this._onScrollY}
             class="container ${side}-container"
           >
+            ${
+              this._hasSideDendrogram[side]
+                ? html`
+                <biowc-heatmap-dendrogram
+                  .dendrogram=${this.dendrograms[side]!}
+                  .side=${side}
+                  .hoveredIndices=${hoveredIndices}
+                  .selectedIndices=${selectedIndices}
+                  @biowc-heatmap-dendrogram-select=
+                    ${this._onDendrogramSelect(side)}
+                  @biowc-heatmap-dendrogram-hover=
+                    ${this._onDendrogramHover(side)}
+                  yShift="0.1"
+                  class="dendrogram"
+                ></biowc-heatmap-dendrogram>`
+                : html``
+            }
 
-              <biowc-heatmap-dendrogram
-                .dendrogram=${this.dendrograms[side]!}
-                .side=${side}
-                .hoveredIndices=${hoveredIndices}
-                .selectedIndices=${selectedIndices}
-                @biowc-heatmap-dendrogram-select=${this._onDendrogramSelect(
-                  side
-                )}
-                @biowc-heatmap-dendrogram-hover=${this._onDendrogramHover(side)}
-                yShift="0.1"
-                class="dendrogram"
-              ></biowc-heatmap-dendrogram>
+            ${
+              this._hasSideLabels[side]
+                ? html`
+                <biowc-heatmap-labels
+                  .labels=${this.labels[side]}
+                  ?horizontal=${horizontal}
+                  .hoveredIndices=${hoveredIndices}
+                  .selectedIndices=${selectedIndices}
+                  @biowc-heatmap-label-hover=${this._onLabelHover}
+                  @biowc-heatmap-label-select=${this._onLabelSelect(side)}
+                  textalign=${textAlign}
+                  class="labels"
+                ></biowc-heatmap-labels>`
+                : html``
+            }
 
-              <biowc-heatmap-labels
-                .labels=${this.labels[side]}
-                ?horizontal=${horizontal}
-                .hoveredIndices=${hoveredIndices}
-                .selectedIndices=${selectedIndices}
-                @biowc-heatmap-label-hover=${this._onLabelHover}
-                @biowc-heatmap-label-select=${this._onLabelSelect(side)}
-                textalign=${textAlign}
-                class="labels"
-              ></biowc-heatmap-labels>
+            ${
+              this._hasSideColorAnnots[side]
+                ? html`
+                <biowc-heatmap-color-annot
+                  .colorAnnots=${this.colorAnnots[side]}
+                  .side=${side}
+                  class="color-annot"
+                ></biowc-heatmap-color-annot>`
+                : html``
+            }
 
           </biowc-heatmap-zoom-container>
         </div>
@@ -223,6 +252,25 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   private get _hasSideDendrogram() {
     return Object.fromEntries(
       Object.values(Side).map(side => [side, !!this.dendrograms[side]])
+    );
+  }
+
+  @computed('colorAnnots')
+  private get _hasSideColorAnnots() {
+    return Object.fromEntries(
+      Object.values(Side).map(side => [side, !!this.colorAnnots[side]])
+    );
+  }
+
+  @computed('_hasSideLabels', '_hasSideDendrogram', '_hasSideColorAnnots')
+  private get _hasSide() {
+    return Object.fromEntries(
+      Object.values(Side).map(side => [
+        side,
+        this._hasSideLabels[side] ||
+          this._hasSideDendrogram[side] ||
+          this._hasSideColorAnnots[side],
+      ])
     );
   }
 
