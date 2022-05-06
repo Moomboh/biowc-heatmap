@@ -20,7 +20,6 @@ export default css`
 
 .label {
     display: inline-block;
-    width: 100%;
     cursor: pointer;
     user-select: none;
     vertical-align: middle;
@@ -38,8 +37,6 @@ export default css`
 }
 
 :host([horizontal]) .label {
-    height: 100%;
-    width: auto;
     transform: rotate(-180deg);
     writing-mode: vertical-rl;
 }
