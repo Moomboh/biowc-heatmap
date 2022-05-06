@@ -1,6 +1,5 @@
 import { html, render } from 'lit';
 import '../src/biowc-heatmap.js';
-import { BiowcHeatmap } from '../src/BiowcHeatmap.js';
 import { fetchDemoData, DemoData } from './demoData.js';
 
 const SMALL_DATASET_URL =
@@ -11,6 +10,9 @@ const MEDIUM_DATASET_URL =
 
 const LARGE_DATASET_URL =
   'https://www.proteomicsdb.org/proteomicsdb/logic/getExpressionProfileHeatmapCluster.xsjs?proteins=insulin%3Bkinase&quantification=MS1&customQuantification=&biologicalSource=tissue%3Bfluid%3Bcell+line&calculationMethod=iBAQ&customCalculationMethod=&swissprotOnly=1&noIsoforms=1&omics=Proteomics&source=db&uuid=&datasetIds=&impute=0&taxcode=9606';
+
+const VERY_LARGE_DATASET_URL =
+  'https://www.proteomicsdb.org/proteomicsdb/logic/getExpressionProfileHeatmapCluster.xsjs?proteins=polymerase%3Bkinase&quantification=MS1&customQuantification=&biologicalSource=tissue%3Bfluid%3Bcell+line&calculationMethod=iBAQ&customCalculationMethod=&swissprotOnly=1&noIsoforms=0&omics=Proteomics&source=db&uuid=&datasetIds=&impute=0&taxcode=9606';
 
 function renderHeatmap(demoData: DemoData) {
   const heatmapContainer = document.querySelector(
@@ -32,7 +34,6 @@ function renderHeatmap(demoData: DemoData) {
         }}
         .colorAnnots=${{
           top: demoData.xAnnotColors,
-          bottom: demoData.xAnnotColors,
         }}
     ></biowc-heatmap>
     `,
@@ -65,11 +66,6 @@ function renderButtons() {
   const buttonsContainer = document.querySelector(
     '#buttons-container'
   ) as HTMLElement;
-
-  function getHeatmap(): BiowcHeatmap {
-    return document.querySelector('#heatmap') as BiowcHeatmap;
-  }
-
   render(
     html`
       <div class="load-data-buttons">
@@ -77,46 +73,41 @@ function renderButtons() {
           id="load-small-data"
           @click=${() => loadAndRenderDemoData(SMALL_DATASET_URL)}
         >
-          Load small dataset
+          Load small dataset (~1.9k)
         </button>
 
         <button
           id="load-medium-data"
           @click=${() => loadAndRenderDemoData(MEDIUM_DATASET_URL)}
         >
-          Load medium dataset
+          Load medium dataset (~56k)
         </button>
 
         <button
           id="load-large-data"
           @click=${() => loadAndRenderDemoData(LARGE_DATASET_URL)}
         >
-          Load large dataset
+          Load large dataset (~148k)
+        </button>
+
+        <button
+          id="load-very-large-data"
+          @click=${() => loadAndRenderDemoData(VERY_LARGE_DATASET_URL)}
+        >
+          Load very large dataset (~369k)
         </button>
       </div>
 
-      <div class="zoom-buttons">
-        <button
-          id="zoom-in"
-          @click=${() => {
-            const heatmap = getHeatmap();
-            heatmap.zoomX += 0.1;
-            heatmap.zoomY += 0.1;
-          }}
-        >
-          Zoom in
-        </button>
-
-        <button
-          id="zoom-out"
-          @click=${() => {
-            const heatmap = getHeatmap();
-            heatmap.zoomX -= 0.1;
-            heatmap.zoomY -= 0.1;
-          }}
-        >
-          Zoom out
-        </button>
+      <div class="description">
+        <ul>
+          <li>
+            Click the buttons above to load protein expression example datasets of different sizes from <a href="https://proteomicsdb.org">proteomicsdb.org</a>.
+            
+          </li>
+          <li>Use <code>ctrl+mousewheel</code> to zoom vertically and <code>ctrl+shift+mousewheel</code> to zoom horizontally</li>
+          <li>Use <code>mousewheel</code> to scroll vertically and <code>shift+mousewheel</code> to scroll horizontally</li>
+          <li>Click on the dendrogram or labels to select/deselect rows or columns</li>
+        </ul>
       </div>
     `,
     buttonsContainer
