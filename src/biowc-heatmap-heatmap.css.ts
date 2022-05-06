@@ -23,11 +23,11 @@ svg {
 
 .hover-overlay {
     pointer-events: none;
-    fill: var(--biowc-heatmap-heatmap-hover-overlay-color, rgba(127, 127, 255, 0.4));
+    fill: var(--biowc-heatmap-heatmap-hover-overlay-color, rgba(127, 127, 255, 0.1));
 }
 
 .selected-overlay {
     pointer-events: none;
-    fill: var(--biowc-heatmap-heatmap-selected-overlay-color, rgba(127, 127, 255, 0.2));
+    fill: var(--biowc-heatmap-heatmap-selected-overlay-color, rgba(127, 127, 255, 0.05));
 } 
 `;

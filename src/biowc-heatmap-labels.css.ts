@@ -19,7 +19,7 @@ export default css`
 }
 
 .label {
-    display: block;
+    display: inline-block;
     width: 100%;
     cursor: pointer;
     user-select: none;
