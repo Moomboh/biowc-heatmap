@@ -33,6 +33,7 @@
     "@custom-elements-manifest/analyzer": "^0.5.7",
     "@open-wc/dev-server-hmr": "^0.1.2",
     "@open-wc/eslint-config": "^7.0.0",
+    "@open-wc/rollup-plugin-html": "^1.2.5",
     "@open-wc/testing": "next",
     "@rollup/plugin-commonjs": "^21.1.0",
     "@rollup/plugin-html": "^0.2.4",

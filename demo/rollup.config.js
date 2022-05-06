@@ -1,29 +1,23 @@
 import commonjs from '@rollup/plugin-commonjs';
 import typescript from 'rollup-plugin-typescript2';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import copy from 'rollup-plugin-copy'
-import { terser } from "rollup-plugin-terser"
+import { terser } from 'rollup-plugin-terser';
+import html from '@open-wc/rollup-plugin-html';
 
 export default {
-  input: 'demo/app.ts',
+  input: 'demo/index.html',
   output: {
-    file: 'dist/demo/bundle.js',
-    format: 'es',
-    name: 'bundle',
+    dir: 'dist-demo',
   },
   plugins: [
     nodeResolve(),
     commonjs(),
     typescript({
-      tsconfig: 'tsconfig.json',
+      compilerOptions: {
+        declaration: false,
+      },
     }),
-    copy({
-      targets: [{
-      src: 'demo/index.html',
-      dest: 'dist/demo',
-        transform: (contents) => contents.toString().replace('../dist/demo/app.js', 'bundle.js')
-      }]
-    }),
-    terser()
+    html(),
+    terser(),
   ],
 };
