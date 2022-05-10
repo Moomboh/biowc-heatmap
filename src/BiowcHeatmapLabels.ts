@@ -2,6 +2,8 @@
 import { LitElement, HTMLTemplateResult, html } from 'lit';
 import { property } from 'lit/decorators.js';
 import styles from './biowc-heatmap-labels.css.js';
+import BiowcHeatmapHoverableMixin from './mixins/BiowcHeatmapHoverableMixin.js';
+import BiowcHeatmapSelectableMixin from './mixins/BiowcHeatmapSelectableMixin.js';
 
 export enum TextAlign {
   left = 'left',
@@ -9,15 +11,9 @@ export enum TextAlign {
   right = 'right',
 }
 
-export type LabelHoverEvent = CustomEvent<{
-  hovered: Set<number>;
-}>;
-
-export type LabelSelectEvent = CustomEvent<{
-  selected: Set<number>;
-}>;
-
-export class BiowcHeatmapLabels extends LitElement {
+export class BiowcHeatmapLabels extends BiowcHeatmapSelectableMixin(
+  BiowcHeatmapHoverableMixin(LitElement)
+) {
   static styles = styles;
 
   @property({ type: String })
@@ -31,12 +27,6 @@ export class BiowcHeatmapLabels extends LitElement {
 
   @property({ attribute: false })
   labels: string[] = [];
-
-  @property({ attribute: false })
-  hoveredIndices: Set<number> = new Set();
-
-  @property({ attribute: false })
-  selectedIndices: Set<number> = new Set();
 
   private _resizeObserver: ResizeObserver | undefined;
 
@@ -114,28 +104,6 @@ export class BiowcHeatmapLabels extends LitElement {
 
     this.selectedIndices = selected;
 
-    const clickEvent: LabelSelectEvent = new CustomEvent(
-      'biowc-heatmap-label-select',
-      {
-        detail: {
-          selected: this.selectedIndices,
-        },
-      }
-    );
-
-    this.dispatchEvent(clickEvent);
-  }
-
-  private _dispatchHoverEvent() {
-    const hoverEvent: LabelHoverEvent = new CustomEvent(
-      'biowc-heatmap-label-hover',
-      {
-        detail: {
-          hovered: this.hoveredIndices,
-        },
-      }
-    );
-
-    this.dispatchEvent(hoverEvent);
+    this._dispatchSelectEvent();
   }
 }

@@ -3,22 +3,17 @@ import { eventOptions, property, query, queryAll } from 'lit/decorators.js';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 import styles from './biowc-heatmap.css.js';
 import { BiowcHeatmapHeatmap } from './BiowcHeatmapHeatmap.js';
-import {
-  BiowcHeatmapLabels,
-  LabelHoverEvent,
-  LabelSelectEvent,
-  TextAlign,
-} from './BiowcHeatmapLabels.js';
+import { BiowcHeatmapLabels, TextAlign } from './BiowcHeatmapLabels.js';
 import {
   BiowcHeatmapDendrogram,
-  DendrogramHoverEvent,
   DendrogramList,
   DendrogramNode,
-  DendrogramSelectEvent,
 } from './BiowcHeatmapDendrogram.js';
 import { computed } from './util/computedDecorator.js';
 import { BiowcHeatmapZoomContainer } from './BiowcHeatmapZoomContainer.js';
 import { BiowcHeatmapColorAnnot } from './BiowcHeatmapColorAnnot.js';
+import { HoverEvent } from './mixins/BiowcHeatmapHoverableMixin.js';
+import { SelectEvent } from './mixins/BiowcHeatmapSelectableMixin.js';
 
 export enum Side {
   top = 'top',
@@ -197,10 +192,10 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                   .side=${side}
                   .hoveredIndices=${hoveredIndices}
                   .selectedIndices=${selectedIndices}
-                  @biowc-heatmap-dendrogram-select=
-                    ${this._handleDendrogramSelect(side)}
-                  @biowc-heatmap-dendrogram-hover=
-                    ${this._handleDendrogramHover(side)}
+                  @biowc-heatmap-side-select=
+                    ${this._handleSelect(horizontal)}
+                  @biowc-heatmap-side-hover=
+                    ${this._handleHover(horizontal)}
                   yShift="0.1"
                   class="dendrogram"
                 ></biowc-heatmap-dendrogram>`
@@ -215,8 +210,8 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                   ?horizontal=${horizontal}
                   .hoveredIndices=${hoveredIndices}
                   .selectedIndices=${selectedIndices}
-                  @biowc-heatmap-label-hover=${this._handleLabelHover}
-                  @biowc-heatmap-label-select=${this._handleLabelSelect(side)}
+                  @biowc-heatmap-side-hover=${this._handleHover(horizontal)}
+                  @biowc-heatmap-side-select=${this._handleSelect(horizontal)}
                   textalign=${textAlign}
                   class="labels"
                 ></biowc-heatmap-labels>`
@@ -288,64 +283,28 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     }
   }
 
-  private _handleLabelHover(side: Side) {
-    const horizontal = side === Side.top || side === Side.bottom;
-
-    return (event: LabelHoverEvent) => {
-      const { hovered } = event.detail;
+  private _handleHover(horizontal: boolean) {
+    return (event: HoverEvent) => {
+      const { hoveredIndices } = event.detail;
 
       if (horizontal) {
-        this.hoveredCols = hovered;
+        this.hoveredCols = hoveredIndices;
       } else {
-        this.hoveredRows = hovered;
-      }
-
-      this._dispatchSelectEvent();
-    };
-  }
-
-  private _handleLabelSelect(side: Side) {
-    const horizontal = side === Side.top || side === Side.bottom;
-
-    return (event: LabelSelectEvent) => {
-      const { selected } = event.detail;
-
-      if (horizontal) {
-        this.selectedCols = selected;
-      } else {
-        this.selectedRows = selected;
-      }
-
-      this._dispatchSelectEvent();
-    };
-  }
-
-  private _handleDendrogramHover(side: Side) {
-    const horizontal = side === Side.top || side === Side.bottom;
-
-    return (event: DendrogramHoverEvent) => {
-      const { hovered } = event.detail;
-
-      if (horizontal) {
-        this.hoveredCols = hovered;
-      } else {
-        this.hoveredRows = hovered;
+        this.hoveredRows = hoveredIndices;
       }
 
       this._dispatchHoverEvent();
     };
   }
 
-  private _handleDendrogramSelect(side: Side) {
-    const horizontal = side === Side.top || side === Side.bottom;
-
-    return (event: DendrogramSelectEvent) => {
-      const selected = new Set([...event.detail.selected]);
+  private _handleSelect(horizontal: boolean) {
+    return (event: SelectEvent) => {
+      const { selectedIndices } = event.detail;
 
       if (horizontal) {
-        this.selectedCols = selected;
+        this.selectedCols = selectedIndices;
       } else {
-        this.selectedRows = selected;
+        this.selectedRows = selectedIndices;
       }
 
       this._dispatchSelectEvent();

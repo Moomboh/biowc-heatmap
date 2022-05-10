@@ -4,6 +4,8 @@ import styles from './biowc-heatmap-dendrogram.css.js';
 import range from './util/range.js';
 import { computed } from './util/computedDecorator.js';
 import { Side } from './BiowcHeatmap.js';
+import BiowcHeatmapSelectableMixin from './mixins/BiowcHeatmapSelectableMixin.js';
+import BiowcHeatmapHoverableMixin from './mixins/BiowcHeatmapHoverableMixin.js';
 
 export interface DendrogramNode {
   left: DendrogramNode | number;
@@ -32,14 +34,6 @@ export interface DendrogramEntry {
 }
 
 export type DendrogramList = DendrogramEntry[];
-
-export type DendrogramHoverEvent = CustomEvent<{
-  hovered: Set<number>;
-}>;
-
-export type DendrogramSelectEvent = CustomEvent<{
-  selected: Set<number>;
-}>;
 
 type Point = { x: number; y: number };
 interface DendrogramPath {
@@ -192,7 +186,9 @@ function calcDendrogramListCentersAndBoundaries(
   return resultList;
 }
 
-export class BiowcHeatmapDendrogram extends LitElement {
+export class BiowcHeatmapDendrogram extends BiowcHeatmapSelectableMixin(
+  BiowcHeatmapHoverableMixin(LitElement)
+) {
   static styles = styles;
 
   @property({ attribute: false })
@@ -209,12 +205,6 @@ export class BiowcHeatmapDendrogram extends LitElement {
 
   @property({ type: Number })
   selectionMarkerWidth = 0.8;
-
-  @property({ attribute: false })
-  selectedIndices: Set<number> = new Set();
-
-  @property({ attribute: false })
-  hoveredIndices: Set<number> = new Set();
 
   render(): SVGTemplateResult {
     if (this._dendrogramList.length === 0) {
@@ -328,28 +318,7 @@ export class BiowcHeatmapDendrogram extends LitElement {
 
     this.selectedIndices = selected;
 
-    const selectedEvent: DendrogramSelectEvent = new CustomEvent(
-      'biowc-heatmap-dendrogram-select',
-      {
-        detail: {
-          selected: this.selectedIndices,
-        },
-      }
-    );
-    this.dispatchEvent(selectedEvent);
-  }
-
-  private _dispatchHoverEvent() {
-    const hoverEvent: DendrogramHoverEvent = new CustomEvent(
-      'biowc-heatmap-dendrogram-hover',
-      {
-        detail: {
-          hovered: this.hoveredIndices,
-        },
-      }
-    );
-
-    this.dispatchEvent(hoverEvent);
+    this._dispatchSelectEvent();
   }
 
   @computed('side')
