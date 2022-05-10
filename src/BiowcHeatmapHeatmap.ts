@@ -73,8 +73,8 @@ export class BiowcHeatmapHeatmap extends LitElement {
     if (value > 0) {
       return svg`
         <rect
-          @mouseover=${this._onHoverCell}
-          @mouseleave=${this._onMouseLeave}
+          @mouseover=${this._handleHoverCell}
+          @mouseleave=${this._handleMouseLeave}
           x="${x}"
           y="${y}"
           width="1"
@@ -130,7 +130,7 @@ export class BiowcHeatmapHeatmap extends LitElement {
     return colorScale(this.color);
   }
 
-  private _onHoverCell(event: Event) {
+  private _handleHoverCell(event: Event) {
     const target = event.target as SVGRectElement;
 
     const cellHoverEvent: CellHoverEvent = new CustomEvent(
@@ -146,7 +146,7 @@ export class BiowcHeatmapHeatmap extends LitElement {
     this.dispatchEvent(cellHoverEvent);
   }
 
-  private _onMouseLeave() {
+  private _handleMouseLeave() {
     const cellHoverEvent: CellHoverEvent = new CustomEvent(
       'biowc-heatmap-cell-hover',
       {

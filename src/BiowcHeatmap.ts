@@ -119,7 +119,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
   constructor() {
     super();
-    this.addEventListener('wheel', this._onWheel);
+    this.addEventListener('wheel', this._handleWheel);
   }
 
   render(): HTMLTemplateResult {
@@ -147,14 +147,14 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     return html`
       <div 
         class="heatmap"
-        @scroll="${this._onHeatmapScroll}"
+        @scroll="${this._handleHeatmapScroll}"
       >
         <biowc-heatmap-heatmap
           .data=${this.data}
           .color=${this.color}
           .selectedRows=${this.selectedRows}
           .selectedCols=${this.selectedCols}
-          @biowc-heatmap-cell-hover=${this._onCellHover}
+          @biowc-heatmap-cell-hover=${this._handleCellHover}
           style="
             width: ${this.zoomX * 100}%;
             height: ${this.zoomY * 100}%;
@@ -186,7 +186,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
             .side=${side}
             .zoomX=${this.zoomX}
             .zoomY=${this.zoomY}
-            @wheel=${horizontal ? this._onScrollX : this._onScrollY}
+            @wheel=${horizontal ? this._handleScrollX : this._handleScrollY}
             class="container ${side}-container"
           >
             ${
@@ -198,9 +198,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                   .hoveredIndices=${hoveredIndices}
                   .selectedIndices=${selectedIndices}
                   @biowc-heatmap-dendrogram-select=
-                    ${this._onDendrogramSelect(side)}
+                    ${this._handleDendrogramSelect(side)}
                   @biowc-heatmap-dendrogram-hover=
-                    ${this._onDendrogramHover(side)}
+                    ${this._handleDendrogramHover(side)}
                   yShift="0.1"
                   class="dendrogram"
                 ></biowc-heatmap-dendrogram>`
@@ -215,8 +215,8 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                   ?horizontal=${horizontal}
                   .hoveredIndices=${hoveredIndices}
                   .selectedIndices=${selectedIndices}
-                  @biowc-heatmap-label-hover=${this._onLabelHover}
-                  @biowc-heatmap-label-select=${this._onLabelSelect(side)}
+                  @biowc-heatmap-label-hover=${this._handleLabelHover}
+                  @biowc-heatmap-label-select=${this._handleLabelSelect(side)}
                   textalign=${textAlign}
                   class="labels"
                 ></biowc-heatmap-labels>`
@@ -274,7 +274,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     );
   }
 
-  private _onWheel(event: WheelEvent) {
+  private _handleWheel(event: WheelEvent) {
     if (event.ctrlKey) {
       event.preventDefault();
       const deltaZoomFactor =
@@ -288,7 +288,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     }
   }
 
-  private _onLabelHover(side: Side) {
+  private _handleLabelHover(side: Side) {
     const horizontal = side === Side.top || side === Side.bottom;
 
     return (event: LabelHoverEvent) => {
@@ -304,7 +304,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     };
   }
 
-  private _onLabelSelect(side: Side) {
+  private _handleLabelSelect(side: Side) {
     const horizontal = side === Side.top || side === Side.bottom;
 
     return (event: LabelSelectEvent) => {
@@ -320,7 +320,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     };
   }
 
-  private _onDendrogramHover(side: Side) {
+  private _handleDendrogramHover(side: Side) {
     const horizontal = side === Side.top || side === Side.bottom;
 
     return (event: DendrogramHoverEvent) => {
@@ -336,7 +336,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     };
   }
 
-  private _onDendrogramSelect(side: Side) {
+  private _handleDendrogramSelect(side: Side) {
     const horizontal = side === Side.top || side === Side.bottom;
 
     return (event: DendrogramSelectEvent) => {
@@ -353,7 +353,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   }
 
   @eventOptions({ passive: true })
-  private _onHeatmapScroll() {
+  private _handleHeatmapScroll() {
     const scrollTop = this._heatmapWrapperElement?.scrollTop ?? 0;
     const scrollLeft = this._heatmapWrapperElement?.scrollLeft ?? 0;
 
@@ -368,7 +368,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     });
   }
 
-  private _onCellHover(event: CustomEvent) {
+  private _handleCellHover(event: CustomEvent) {
     this.hoveredCols = new Set([event.detail.x]);
     this.hoveredRows = new Set([event.detail.y]);
     this._dispatchHoverEvent();
@@ -376,7 +376,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
   // TODO: use native scroll for smooth scrolling
   @eventOptions({ passive: true })
-  private _onScrollX(event: WheelEvent) {
+  private _handleScrollX(event: WheelEvent) {
     if (this._heatmapWrapperElement === undefined) {
       return;
     }
@@ -384,7 +384,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   }
 
   @eventOptions({ passive: true })
-  private _onScrollY(event: WheelEvent) {
+  private _handleScrollY(event: WheelEvent) {
     if (this._heatmapWrapperElement === undefined) {
       return;
     }

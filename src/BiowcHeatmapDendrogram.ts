@@ -264,12 +264,12 @@ export class BiowcHeatmapDendrogram extends LitElement {
             L${topRight.x} ${topRight.y}
             L${bottomRight.x} ${bottomRight.y}
           "
-          @mouseenter="${this._onPathMouseenter(
+          @mouseenter="${this._handlePathMouseenter(
             path.leftBoundary,
             path.rightBoundary
           )}"
-          @mouseleave="${this._onPathMouseleave}"
-          @click="${this._onPathClick}"
+          @mouseleave="${this._handlePathMouseleave}"
+          @click="${this._handlePathClick}"
         />
       `;
   }
@@ -300,19 +300,19 @@ export class BiowcHeatmapDendrogram extends LitElement {
     `;
   }
 
-  private _onPathMouseenter(leftBoundary: number, rightBoundary: number) {
+  private _handlePathMouseenter(leftBoundary: number, rightBoundary: number) {
     return () => {
       this.hoveredIndices = new Set([...range(leftBoundary, rightBoundary)]);
       this._dispatchHoverEvent();
     };
   }
 
-  private _onPathMouseleave() {
+  private _handlePathMouseleave() {
     this.hoveredIndices = new Set();
     this._dispatchHoverEvent();
   }
 
-  private _onPathClick() {
+  private _handlePathClick() {
     const hovered = [...this.hoveredIndices];
     const selected: Set<number> = new Set([...this.selectedIndices]);
 

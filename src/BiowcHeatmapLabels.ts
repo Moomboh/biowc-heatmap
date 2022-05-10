@@ -42,7 +42,7 @@ export class BiowcHeatmapLabels extends LitElement {
 
   constructor() {
     super();
-    this._resizeObserver = new ResizeObserver(this._onResize.bind(this));
+    this._resizeObserver = new ResizeObserver(this._handleResize.bind(this));
     this._resizeObserver.observe(this);
   }
 
@@ -50,7 +50,7 @@ export class BiowcHeatmapLabels extends LitElement {
     this._setComputedStyles();
   }
 
-  _onResize() {
+  _handleResize() {
     this._setComputedStyles();
   }
 
@@ -69,9 +69,9 @@ export class BiowcHeatmapLabels extends LitElement {
       ${this.labels.map(
         (label, index) => html`
           <div
-            @mouseenter=${this._onMouseEnter(index)}
-            @mouseleave=${this._onMouseLeave}
-            @click=${this._onClick}
+            @mouseenter=${this._handleMouseEnter(index)}
+            @mouseleave=${this._handleMouseLeave}
+            @click=${this._handleClick}
             class="
               label
               align-${this.textalign}
@@ -86,19 +86,19 @@ export class BiowcHeatmapLabels extends LitElement {
     `;
   }
 
-  private _onMouseEnter(index: number) {
+  private _handleMouseEnter(index: number) {
     return () => {
       this.hoveredIndices = new Set([index]);
       this._dispatchHoverEvent();
     };
   }
 
-  private _onMouseLeave() {
+  private _handleMouseLeave() {
     this.hoveredIndices = new Set();
     this._dispatchHoverEvent();
   }
 
-  private _onClick() {
+  private _handleClick() {
     const hovered = [...this.hoveredIndices];
     const selected: Set<number> = new Set([...this.selectedIndices]);
 
