@@ -57,51 +57,6 @@ function getColumnLabels(prdbData: any): string[] {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getDendrogramTree(
-  clusterdata: ClusterDataEntry[],
-  idToIndex: ClusterIdMapFunction
-): DendrogramNode {
-  function parseEntry(entry: ClusterDataEntry): DendrogramNode {
-    if (!entry[1] && !entry[3]) {
-      return {
-        left: idToIndex(entry[0]),
-        right: idToIndex(entry[2]),
-        height: entry[4],
-      } as DendrogramNode;
-    }
-
-    if (entry[1] && !entry[3]) {
-      const leftEntry = clusterdata[entry[0] as number];
-      return {
-        left: parseEntry(leftEntry),
-        right: idToIndex(entry[2]),
-        height: entry[4],
-      } as DendrogramNode;
-    }
-
-    if (!entry[1] && entry[3]) {
-      const rightEntry = clusterdata[entry[2] as number];
-      return {
-        left: idToIndex(entry[0]),
-        right: parseEntry(rightEntry),
-        height: entry[4],
-      } as DendrogramNode;
-    }
-
-    const rightEntry = clusterdata[entry[2] as number];
-    const leftEntry = clusterdata[entry[0] as number];
-    return {
-      left: parseEntry(leftEntry),
-      right: parseEntry(rightEntry),
-      height: entry[4],
-    } as DendrogramNode;
-  }
-
-  const lastEntry = clusterdata[clusterdata.length - 1];
-  return parseEntry(lastEntry);
-}
-
 function getDendrogramList(
   clusterdata: ClusterDataEntry[],
   idToIndex: ClusterIdMapFunction
