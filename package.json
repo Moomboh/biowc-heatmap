@@ -3,7 +3,7 @@
   "description": "",
   "license": "MIT",
   "author": "Elias Kahl <contact@elias.works>",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "main": "dist/src/index.js",
   "module": "dist/src/index.js",
   "exports": {
@@ -21,7 +21,8 @@
     "test": "tsc && wtr --coverage",
     "test:watch": "tsc && concurrently -k -r \"tsc --watch --preserveWatchOutput\" \"wtr --watch\"",
     "storybook": "tsc && npm run analyze -- --exclude dist && concurrently -k -r \"tsc --watch --preserveWatchOutput\" \"wds -c .storybook/server.mjs\"",
-    "storybook:build": "tsc && npm run analyze -- --exclude dist && build-storybook"
+    "storybook:build": "tsc && npm run analyze -- --exclude dist && build-storybook",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "@open-wc/scoped-elements": "^2.0.0-next.6",
