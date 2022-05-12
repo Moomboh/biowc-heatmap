@@ -1,5 +1,11 @@
 import { html, LitElement, HTMLTemplateResult } from 'lit';
-import { eventOptions, property, query, queryAll } from 'lit/decorators.js';
+import {
+  eventOptions,
+  property,
+  query,
+  queryAll,
+  state,
+} from 'lit/decorators.js';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 import styles from './biowc-heatmap.css.js';
 import { BiowcHeatmapHeatmap } from './BiowcHeatmapHeatmap.js';
@@ -75,7 +81,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   zoomY = 1;
 
   @property({ type: Number })
-  zoomFactor = 1.25;
+  zoomFactor = 1.1;
 
   @property({ attribute: false })
   data: number[][] = [];
@@ -112,15 +118,45 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   // eslint-disable-next-line no-undef
   private _verticalContainers: NodeListOf<HTMLElement> | undefined;
 
+  @state()
+  private _isZooming = false;
+
+  @state()
+  private _zoomingX = 1;
+
+  @state()
+  private _zoomingY = 1;
+
+  private _mouseClientX: number = -1;
+
+  private _mouseClientY: number = -1;
+
+  private _isMouseHovering = false;
+
   constructor() {
     super();
-    this.addEventListener('wheel', this._handleWheel);
+
+    this.addEventListener('wheel', this._handleWheel.bind(this), {
+      capture: true,
+      passive: true,
+    });
+
+    this.addEventListener('mouseenter', this._handleMouseEnter.bind(this));
+    this.addEventListener('mouseleave', this._handleMouseLeave.bind(this));
+
+    window.addEventListener('mousemove', this._handleMouseMove.bind(this), {
+      passive: true,
+    });
+
+    window.addEventListener('keydown', this._handleControlDown.bind(this));
+    window.addEventListener('keyup', this._handleControlUp.bind(this));
   }
 
   render(): HTMLTemplateResult {
     this._setComputedStyleProps();
 
     return html`
+      ${this._isZooming ? this._renderZoomOverlay() : ''}
       ${this._renderHeatmap()}
       ${this._renderSides()}
     `;
@@ -136,6 +172,19 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
         this.style.removeProperty(sideSizeProp);
       }
     }
+  }
+
+  private _renderZoomOverlay(): HTMLTemplateResult {
+    return html`
+      <div class="zoom-tooltip">
+        <div class="zoom-y-text">
+          Vertical zoom: ${Math.round(this._zoomingY * 100)}%
+        </div>
+        <div class="zoom-x-text">
+          Horizontal zoom: ${Math.round(this._zoomingX * 100)}%
+        </div>
+      </div>
+    `;
   }
 
   private _renderHeatmap(): HTMLTemplateResult {
@@ -181,7 +230,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
             .side=${side}
             .zoomX=${this.zoomX}
             .zoomY=${this.zoomY}
-            @wheel=${horizontal ? this._handleScrollX : this._handleScrollY}
             class="container ${side}-container"
           >
             ${
@@ -269,18 +317,63 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     );
   }
 
+  private _handleMouseEnter() {
+    this._isMouseHovering = true;
+  }
+
+  private _handleMouseLeave() {
+    this._isMouseHovering = false;
+  }
+
+  private _handleControlDown(event: KeyboardEvent) {
+    if (event.key === 'Control' && this._isMouseHovering) {
+      if (!this._isZooming) {
+        this.style.setProperty(
+          '--biowc-heatmap-zoom-tooltip-top',
+          `${this._mouseClientY}px`
+        );
+
+        this.style.setProperty(
+          '--biowc-heatmap-zoom-tooltip-left',
+          `${this._mouseClientX}px`
+        );
+
+        this._isZooming = true;
+        this._zoomingX = this.zoomX;
+        this._zoomingY = this.zoomY;
+      }
+    }
+  }
+
+  private _handleControlUp(event: KeyboardEvent) {
+    if (event.key === 'Control') {
+      this.style.removeProperty('--biowc-heatmap-zoom-tooltip-top');
+      this.style.removeProperty('--biowc-heatmap-zoom-tooltip-left');
+
+      this._isZooming = false;
+      this.zoomX = this._zoomingX;
+      this.zoomY = this._zoomingY;
+    }
+  }
+
   private _handleWheel(event: WheelEvent) {
-    if (event.ctrlKey) {
+    if (this._isZooming && event.ctrlKey) {
       event.preventDefault();
+
       const deltaZoomFactor =
         event.deltaY < 0 ? this.zoomFactor : 1 / this.zoomFactor;
 
       if (event.shiftKey) {
-        this.zoomX = Math.max(1, this.zoomX * deltaZoomFactor);
+        this._zoomingX = Math.max(1, this._zoomingX * deltaZoomFactor);
       } else {
-        this.zoomY = Math.max(1, this.zoomY * deltaZoomFactor);
+        this._zoomingY = Math.max(1, this._zoomingY * deltaZoomFactor);
       }
     }
+  }
+
+  private _handleMouseMove(event: MouseEvent) {
+    this._mouseClientX = event.clientX;
+    this._mouseClientY = event.clientY;
   }
 
   private _handleHover(horizontal: boolean) {
@@ -311,17 +404,17 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     };
   }
 
-  @eventOptions({ passive: true })
+  @eventOptions({ passive: true, capture: true })
   private _handleHeatmapScroll() {
-    const scrollTop = this._heatmapWrapperElement?.scrollTop ?? 0;
-    const scrollLeft = this._heatmapWrapperElement?.scrollLeft ?? 0;
+    const scrollTop = this._heatmapWrapperElement!.scrollTop!;
+    const scrollLeft = this._heatmapWrapperElement!.scrollLeft!;
 
-    this._verticalContainers?.forEach(wrapper => {
+    this._verticalContainers!.forEach(wrapper => {
       // eslint-disable-next-line no-param-reassign
       wrapper.scrollTop = scrollTop;
     });
 
-    this._horizontalContainers?.forEach(wrapper => {
+    this._horizontalContainers!.forEach(wrapper => {
       // eslint-disable-next-line no-param-reassign
       wrapper.scrollLeft = scrollLeft;
     });
@@ -331,23 +424,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     this.hoveredCols = new Set([event.detail.x]);
     this.hoveredRows = new Set([event.detail.y]);
     this._dispatchHoverEvent();
-  }
-
-  // TODO: use native scroll for smooth scrolling
-  @eventOptions({ passive: true })
-  private _handleScrollX(event: WheelEvent) {
-    if (this._heatmapWrapperElement === undefined) {
-      return;
-    }
-    this._heatmapWrapperElement.scrollLeft += event.deltaX;
-  }
-
-  @eventOptions({ passive: true })
-  private _handleScrollY(event: WheelEvent) {
-    if (this._heatmapWrapperElement === undefined) {
-      return;
-    }
-    this._heatmapWrapperElement.scrollTop += event.deltaY;
   }
 
   private _dispatchHoverEvent() {

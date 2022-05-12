@@ -24,6 +24,16 @@ export default css`
   grid-area: heatmap;
 }
 
+.zoom-tooltip {
+  background: var(--biowc-heatmap-zoom-tooltip-background, #ffffff);
+  position: fixed;
+  top: var(--biowc-heatmap-zoom-tooltip-top, 0);
+  left: var(--biowc-heatmap-zoom-tooltip-left, 0);
+  padding: 0.5em;
+  border-radius: 0 0.5em 0.5em 0.5em;
+  cursor: zoom-in;
+}
+
 .top-container {
   grid-area: top;
   display: grid;
