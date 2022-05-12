@@ -10,7 +10,7 @@ export default css`
 
 svg {
     display: block;
-    shape-rendering: optimizeSpeed;
+    shape-rendering: crispEdges;
 }
 
 .cell {
