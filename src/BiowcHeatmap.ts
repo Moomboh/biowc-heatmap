@@ -358,8 +358,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
   private _handleWheel(event: WheelEvent) {
     if (this._isZooming && event.ctrlKey) {
-      event.preventDefault();
-
       const deltaZoomFactor =
         event.deltaY < 0 ? this.zoomFactor : 1 / this.zoomFactor;
 
