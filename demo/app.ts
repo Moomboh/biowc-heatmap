@@ -11,9 +11,6 @@ const MEDIUM_DATASET_URL =
 const LARGE_DATASET_URL =
   'https://www.proteomicsdb.org/proteomicsdb/logic/getExpressionProfileHeatmapCluster.xsjs?proteins=insulin%3Bkinase&quantification=MS1&customQuantification=&biologicalSource=tissue%3Bfluid%3Bcell+line&calculationMethod=iBAQ&customCalculationMethod=&swissprotOnly=1&noIsoforms=1&omics=Proteomics&source=db&uuid=&datasetIds=&impute=0&taxcode=9606';
 
-const VERY_LARGE_DATASET_URL =
-  'https://www.proteomicsdb.org/proteomicsdb/logic/getExpressionProfileHeatmapCluster.xsjs?proteins=polymerase%3Bkinase&quantification=MS1&customQuantification=&biologicalSource=tissue%3Bfluid%3Bcell+line&calculationMethod=iBAQ&customCalculationMethod=&swissprotOnly=1&noIsoforms=0&omics=Proteomics&source=db&uuid=&datasetIds=&impute=0&taxcode=9606';
-
 function renderHeatmap(demoData: DemoData) {
   const heatmapContainer = document.querySelector(
     '#heatmap-container'
@@ -22,7 +19,7 @@ function renderHeatmap(demoData: DemoData) {
   render(
     html`
     <biowc-heatmap
-        id="heatmap"
+        id="prdb-heatmap"
         .data=${demoData.data}
         .labels=${{
           top: demoData.xLabels,
@@ -88,13 +85,6 @@ function renderButtons() {
           @click=${() => loadAndRenderDemoData(LARGE_DATASET_URL)}
         >
           Load large dataset (~148k)
-        </button>
-
-        <button
-          id="load-very-large-data"
-          @click=${() => loadAndRenderDemoData(VERY_LARGE_DATASET_URL)}
-        >
-          Load very large dataset (~369k)
         </button>
       </div>
 

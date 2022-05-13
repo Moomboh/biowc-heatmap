@@ -7,6 +7,7 @@
       background: #fafafa;
       font-family: sans-serif;
       margin: 0;
+      padding: 1em;
     }
 
     #buttons-container {
@@ -27,18 +28,117 @@
       margin-bottom: 0.5em;
     }
 
-    biowc-heatmap {
+    #prdb-heatmap {
       height: 80vh;
       --biowc-heatmap-top-size: 250px;
       --biowc-heatmap-left-size: 220px;
       --biowc-heatmap-dendrogram-top-size: 150px;
       --biowc-heatmap-dendrogram-left-size: 120px;
     }
+
+    .divider {
+      margin: 2em 0;
+    }
+
+    #heatmap {
+      margin: 0 auto;
+      max-width: 800px;
+      background: #f0f0f0;
+    }
+  </style>
+
+  <style>
+    /* you might want to set sizes of the sides and annotation elements explicitly.
+     * this can be done via the following CSS variables, which accept any valid CSS unit: 
+    */
+    #heatmap {
+      --biowc-heatmap-top-size: 200px;
+      --biowc-heatmap-dendrogram-top-size: 100px;
+      --biowc-heatmap-label-top-size: 60px;
+      --biowc-heatmap-color-annot-top-size: 40px;
+      /* analogous CSS variables exist for left, right and bottom */
+    }
   </style>
 </head>
 <body>
+  <h1>biowc-heatmap demo</h1>
+  <h2>Readme example:</h2>
+  <biowc-heatmap id="heatmap"></biowc-heatmap>
+
+  <script type="module">
+    import '../dist/src/biowc-heatmap.js';
+
+    const biowcHeatmap = document.querySelector('#heatmap');
+
+    // Sets the color which will be used to color the heatmap cells.
+    biowcHeatmap.color = '#ff0000';
+
+    // Sets the data values which the cells will be colored based on (must be between 0 and 1).
+    biowcHeatmap.data = [
+      [0.2, 0.6, 0.3],
+      [0.1, 0.2, 0.7],
+      [0.5, 0.4, 1.0],
+    ];
+
+    // Sets the labels on the sides
+    biowcHeatmap.labels = {
+      top: ['T1', 'T2', 'T3'],
+      left: ['L1', 'L2', 'L3'],
+      right: ['R1', 'R2', 'R3'],
+      bottom: ['B1', 'B2', 'B3'],
+    };
+
+    biowcHeatmap.colorAnnots =  {
+      top: ['red', 'green', 'blue'],
+      left: ['red', 'green', 'blue'],
+      right: ['red', 'green', 'blue'],
+      bottom: ['red', 'green', 'blue'],
+    };
+
+    // Pass dendrograms as tree structure
+    const dendrogramTree = {
+      left: {
+        left: 0,
+        right: 1,
+        height: 1,
+      },
+      right: 2,
+      height: 2,
+    };
+
+    // Or as a self referencing array which is more performant and required for large datasets
+    const dendrogramArray = [
+      {
+        left: 0,
+        isLeftDendrogram: false,
+        right: 1,
+        isRightDendrogram: false,
+        height: 1,
+      },
+      {
+        left: 0,
+        isLeftDendrogram: true,
+        right: 2,
+        isRightDendrogram: false,
+        height: 2,
+      }
+    ];
+
+    // Sets the dendrograms for the sides
+    biowcHeatmap.dendrograms = {
+      top: dendrogramTree,
+      left: dendrogramArray,
+      right: dendrogramTree,
+      bottom: dendrogramArray,
+    };
+  </script>
+
+  <hr class="divider"/>
+
+  <h2>Using <a href="https://proteomicsdb.org">proteomicsdb.org</a> data:</h2>
   <div id="buttons-container"></div>
   <div id="heatmap-container"></div>
   <script type="module" src="../dist/demo/app.js"></script>
+
 </body>
 </html>
