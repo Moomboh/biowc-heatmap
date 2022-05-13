@@ -1,6 +1,6 @@
 {
   "name": "biowc-heatmap",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "description": "An interactive, zoomable heatmap with rich annotations and selectable dendrograms for exploring biological datasets.",
   "license": "MIT",
   "author": {
