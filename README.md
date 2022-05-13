@@ -4,10 +4,8 @@ An interactive, zoomable heatmap with rich annotations and selectable dendrogram
 
 ## Installation
 
-This component is not yet available as a npm package and must for now be added as a git dependency.
-
 ```bash
-npm i https://github.com/Moomboh/biowc-heatmap
+npm i biowc-heatmap
 ```
 
 ## Usage
