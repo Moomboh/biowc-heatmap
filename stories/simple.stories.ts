@@ -15,16 +15,7 @@ function generateLabels(prefix: string, times: number): string[] {
 const DEFAULT_LABELS = {
   [Side.top]: generateLabels('label_', DEFAULT_DATA_SIZE),
   [Side.left]: generateLabels('label_', DEFAULT_DATA_SIZE),
-  [Side.right]: generateLabels('label_', DEFAULT_DATA_SIZE),
-  [Side.bottom]: generateLabels('label_', DEFAULT_DATA_SIZE),
 } as Labels;
-
-const DEFAULT_LABEL_SIZES = {
-  [Side.top]: 0.3,
-  [Side.left]: 0.3,
-  [Side.right]: 0.3,
-  [Side.bottom]: 0.3,
-} as SideNumbers;
 
 export default {
   title: 'BiowcHeatmap',
@@ -32,7 +23,6 @@ export default {
   argTypes: {
     data: { control: 'object', defaultValue: DEFAULT_DATA },
     labels: { control: 'object', defaultValue: DEFAULT_LABELS },
-    labelSizes: { control: 'object', defaultValue: DEFAULT_LABEL_SIZES },
   },
 };
 
@@ -51,14 +41,12 @@ interface ArgTypes {
 const Template: Story<ArgTypes> = ({
   data = DEFAULT_DATA,
   labels = DEFAULT_LABELS,
-  labelSizes = DEFAULT_LABEL_SIZES,
 }: ArgTypes) => html`
   <biowc-heatmap
-    style="max-width: 500px;"
+    style="max-width: 600px;"
     .data=${data}
     .labels=${labels}
-    .labelSizes=${labelSizes}
   ></biowc-heatmap>
 `;
 
-export const Regular = Template.bind({});
+export const Simple = Template.bind({});
