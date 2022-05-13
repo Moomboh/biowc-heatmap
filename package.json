@@ -3,7 +3,7 @@
   "description": "",
   "license": "MIT",
   "author": "Elias Kahl <contact@elias.works>",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/src/index.js",
   "module": "dist/src/index.js",
   "exports": {
