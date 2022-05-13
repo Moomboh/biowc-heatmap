@@ -138,7 +138,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     this.addEventListener('wheel', this._handleWheel.bind(this), {
       capture: true,
-      passive: true,
     });
 
     this.addEventListener('mouseenter', this._handleMouseEnter.bind(this));
@@ -356,7 +355,8 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   }
 
   private _handleWheel(event: WheelEvent) {
-    if (this._isZooming && event.ctrlKey) {
+    if (event.ctrlKey) {
+      event.preventDefault();
       const deltaZoomFactor =
         event.deltaY < 0 ? this.zoomFactor : 1 / this.zoomFactor;
 
