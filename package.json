@@ -1,6 +1,6 @@
 {
   "name": "biowc-heatmap",
-  "description": "",
+  "description": "An interactive, zoomable heatmap with rich annotations and selectable dendrograms for exploring biological datasets.",
   "license": "MIT",
   "author": "Elias Kahl <contact@elias.works>",
   "version": "0.1.1",
