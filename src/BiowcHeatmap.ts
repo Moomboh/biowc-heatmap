@@ -244,7 +244,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                     ${this._handleSelect(horizontal)}
                   @biowc-heatmap-side-hover=
                     ${this._handleHover(horizontal)}
-                  yShift="0.1"
                   class="dendrogram"
                 ></biowc-heatmap-dendrogram>`
                 : html``
