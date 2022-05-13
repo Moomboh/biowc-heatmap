@@ -1,9 +1,23 @@
 {
   "name": "biowc-heatmap",
+  "version": "0.1.1",
   "description": "An interactive, zoomable heatmap with rich annotations and selectable dendrograms for exploring biological datasets.",
   "license": "MIT",
-  "author": "Elias Kahl <contact@elias.works>",
-  "version": "0.1.1",
+  "author": {
+    "name": "Elias Kahl",
+    "email": "contact@elias.works"
+  },
+  "homepage": "https://github.com/Moomboh/biowc-heatmap#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Moomboh/biowc-heatmap.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Moomboh/biowc-heatmap/issues"
+  },
+  "files": [
+    "dist/src"
+  ],
   "main": "dist/src/index.js",
   "module": "dist/src/index.js",
   "exports": {
