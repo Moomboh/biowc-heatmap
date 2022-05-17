@@ -20,6 +20,7 @@ import { BiowcHeatmapZoomContainer } from './BiowcHeatmapZoomContainer.js';
 import { BiowcHeatmapColorAnnot } from './BiowcHeatmapColorAnnot.js';
 import { HoverEvent } from './mixins/BiowcHeatmapHoverableMixin.js';
 import { SelectEvent } from './mixins/BiowcHeatmapSelectableMixin.js';
+import { ColorScaleConfig } from './util/colors.js';
 
 export enum Side {
   top = 'top',
@@ -71,9 +72,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     };
   }
 
-  @property({ type: String })
-  color: String = '#b40000';
-
   @property({ type: Number })
   zoomX = 1;
 
@@ -82,6 +80,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
   @property({ type: Number })
   zoomFactor = 1.1;
+
+  @property({ attribute: false })
+  color: string | ColorScaleConfig = '#b40000';
 
   @property({ attribute: false })
   data: number[][] = [];

@@ -1,11 +1,10 @@
+import { binarySearchUpperBound } from './binarySearchUpperBound.js';
+
 export type RgbValues = [number, number, number];
 
-type ColorScaleCache = {
-  [value: number]: string;
-};
-
-type ColorScaleCaches = {
-  [key: string]: ColorScaleCache;
+export type ColorScaleConfig = {
+  colors: string[];
+  values: number[];
 };
 
 export function rgbStringToRgbValues(color: string): RgbValues {
@@ -30,36 +29,70 @@ export function hexStringToRgbValues(color: string): RgbValues {
   return rgbValues as RgbValues;
 }
 
-const caches = {} as ColorScaleCaches;
+function validateColorScaleConfig(config: ColorScaleConfig): void {
+  const { colors, values } = config;
+  const errorMessage = (message: string) =>
+    `Invalid color scale config: ${message}: ${JSON.stringify(config)}`;
 
-export const colorScale: (color: string) => (value: number) => string = (
-  color: string
-) => {
-  if (!color.startsWith('rgb(') && !color.startsWith('#')) {
-    throw new Error('color must be in rgb() or hex format');
+  for (const color of colors) {
+    if (!color.startsWith('rgb(') && !color.startsWith('#')) {
+      throw new Error(errorMessage(`color must be in rgb() or hex format`));
+    }
   }
 
-  const rgbValues = color.startsWith('rgb(')
-    ? rgbStringToRgbValues(color)
-    : hexStringToRgbValues(color);
-
-  if (!(color in caches)) {
-    caches[color] = {};
+  if (values.length !== colors.length) {
+    throw new Error(
+      errorMessage(`colors and values must have the same length`)
+    );
   }
+
+  let lastValue = -Infinity;
+  for (const value of values) {
+    if (value < lastValue) {
+      throw new Error(errorMessage('values must be in ascending order'));
+    }
+    lastValue = value;
+  }
+}
+
+export const colorScale: (
+  colorConfig: string | ColorScaleConfig
+) => (value: number) => string = (colorConfig: string | ColorScaleConfig) => {
+  const colorScaleConfig =
+    typeof colorConfig === 'string'
+      ? {
+          colors: ['rgb(255,255,255)', colorConfig],
+          values: [0, 1],
+        }
+      : colorConfig;
+
+  validateColorScaleConfig(colorScaleConfig);
+
+  const { colors, values: colorValues } = colorScaleConfig;
+
+  const rgbValues = colors.map(c =>
+    c.startsWith('rgb(') ? rgbStringToRgbValues(c) : hexStringToRgbValues(c)
+  );
 
   return (value: number) => {
-    if (value in caches[color]) {
-      return caches[color][value];
+    const i = binarySearchUpperBound(colorValues, x => x > value);
+
+    if (i === 0) {
+      return colors[0];
     }
 
-    if (value > 1 || value < 0) {
-      throw new Error('value must be between 0 and 1');
+    if (i === colors.length) {
+      return colors[colors.length - 1];
     }
 
-    const [r, g, b] = rgbValues.map(v => v * value + (1 - value) * 255);
-    const result = `rgb(${r}, ${g}, ${b})`;
+    // calculate the intermediate color between `rgbValues[i - 1]` and `rgbValues[i]`
+    // corresponding to `value`
+    const relativeValue =
+      (value - colorValues[i - 1]) / (colorValues[i] - colorValues[i - 1]);
+    const [r, g, b] = rgbValues[i - 1].map((v, j) =>
+      Math.round(v * (1 - relativeValue) + relativeValue * rgbValues[i][j])
+    );
 
-    caches[color][value] = result;
-    return result;
+    return `rgb(${r}, ${g}, ${b})`;
   };
 };

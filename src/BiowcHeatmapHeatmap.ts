@@ -1,6 +1,6 @@
 import { svg, LitElement, SVGTemplateResult } from 'lit';
 import { property } from 'lit/decorators.js';
-import { colorScale } from './util/colors.js';
+import { colorScale, ColorScaleConfig } from './util/colors.js';
 import styles from './biowc-heatmap-heatmap.css.js';
 import { computed } from './util/computedDecorator.js';
 
@@ -16,7 +16,7 @@ export class BiowcHeatmapHeatmap extends LitElement {
   data: number[][] = [];
 
   @property({ attribute: false })
-  color: string = '#b40000';
+  color: string | ColorScaleConfig = '#b40000';
 
   @property({ attribute: false })
   hoveredRows: Set<number> = new Set();
@@ -70,22 +70,18 @@ export class BiowcHeatmapHeatmap extends LitElement {
   }
 
   private _renderCell(x: number, y: number, value: number): SVGTemplateResult {
-    if (value > 0) {
-      return svg`
-        <rect
-          @mouseover=${this._handleHoverCell}
-          @mouseleave=${this._handleMouseLeave}
-          x="${x}"
-          y="${y}"
-          width="1"
-          height="1"
-          fill="${this._colorScale(value)}"
-          class="cell"
-        />
-        `;
-    }
-
-    return svg``;
+    return svg`
+      <rect
+        @mouseover=${this._handleHoverCell}
+        @mouseleave=${this._handleMouseLeave}
+        x="${x}"
+        y="${y}"
+        width="1"
+        height="1"
+        fill="${this._colorScale(value)}"
+        class="cell"
+      />
+    `;
   }
 
   private _renderRowOverlay(row: number, cssClass: string): SVGTemplateResult {
