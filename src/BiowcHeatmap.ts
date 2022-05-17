@@ -271,6 +271,10 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                 <biowc-heatmap-color-annot
                   .colorAnnots=${this.colorAnnots[side]}
                   .side=${side}
+                  .hoveredIndices=${hoveredIndices}
+                  .selectedIndices=${selectedIndices}
+                  @biowc-heatmap-side-hover=${this._handleHover(horizontal)}
+                  @biowc-heatmap-side-select=${this._handleSelect(horizontal)}
                   class="color-annot"
                 ></biowc-heatmap-color-annot>`
                 : html``

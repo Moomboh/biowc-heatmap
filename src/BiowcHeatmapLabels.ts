@@ -89,21 +89,6 @@ export class BiowcHeatmapLabels extends BiowcHeatmapSelectableMixin(
   }
 
   private _handleClick() {
-    const hovered = [...this.hoveredIndices];
-    const selected: Set<number> = new Set([...this.selectedIndices]);
-
-    if (hovered.every(x => selected.has(x))) {
-      hovered.forEach(x => {
-        selected.delete(x);
-      });
-    } else {
-      hovered.forEach(x => {
-        selected.add(x);
-      });
-    }
-
-    this.selectedIndices = selected;
-
-    this._dispatchSelectEvent();
+    this._selectIndices(this.hoveredIndices);
   }
 }
