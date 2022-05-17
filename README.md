@@ -24,8 +24,14 @@ or just in vanilla js:
 
   const biowcHeatmap = document.querySelector('#heatmap');
 
-  // Sets the color which will be used to color the heatmap cells.
-  biowcHeatmap.color = '#ff0000';
+  // Sets the color scale which will be used to color the heatmap cells.
+  biowcHeatmap.color = {
+    colors: ['#0000bb', '#ffffff', '#ff0000'],
+    values: [-1, 0, 1]
+  };
+  // can also be set to a single color: `biowcHeatmap.color = '#ff0000';`
+  // which is equivalent to:
+  // `biowcHeatmap.color = { colors: ['#ffffff', '#ff0000'], values: [0, 1] };`
 
   // Sets the data values which the cells will be colored based on (must be between 0 and 1).
   biowcHeatmap.data = [

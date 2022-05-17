@@ -70,14 +70,23 @@
 
     const biowcHeatmap = document.querySelector('#heatmap');
 
-    // Sets the color which will be used to color the heatmap cells.
-    biowcHeatmap.color = '#ff0000';
+    // Sets the color scale which will be used to color the heatmap cells.
+    biowcHeatmap.color = {
+      colors: ['#0000bb', '#ffffff', '#ff0000'],
+      values: [-1, 0, 1]
+    };
+    // can also be set to a single color: `biowcHeatmap.color = '#ff0000';`
+    // which is equivalent to:
+    // `biowcHeatmap.color = { colors: ['#ffffff', '#ff0000'], values: [0, 1] };`
+    // values which are outside the range ov `values` will be correspondingly colored
+    // with the color for the lowest or highest value in `colors`.
 
-    // Sets the data values which the cells will be colored based on (must be between 0 and 1).
+
+    // Sets the data values which the cells will be colored based on.
     biowcHeatmap.data = [
-      [0.2, 0.6, 0.3],
-      [0.1, 0.2, 0.7],
-      [0.5, 0.4, 1.0],
+      [-2, 0.6, -1],
+      [0.1, 0.0, -0.7],
+      [-0.5, 0.7, 2.0],
     ];
 
     // Sets the labels on the sides
@@ -89,10 +98,10 @@
     };
 
     biowcHeatmap.colorAnnots =  {
-      top: ['red', 'green', 'blue'],
-      left: ['red', 'green', 'blue'],
-      right: ['red', 'green', 'blue'],
-      bottom: ['red', 'green', 'blue'],
+      top: ['#880000', '#008800', '#000088'],
+      left: ['#880000', '#008800', '#000088'],	
+      right: ['#880000', '#008800', '#000088'],
+      bottom: ['#880000', '#008800', '#000088'],
     };
 
     // Pass dendrograms as tree structure
