@@ -11,7 +11,7 @@ export default css`
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    background: var(--biowc-heatmap-labels-background-color, rgba(1, 1, 1, 0));
+    background: var(--biowc-heatmap-labels-background-color, #ffffff);
 }
 
 :host([horizontal]) {

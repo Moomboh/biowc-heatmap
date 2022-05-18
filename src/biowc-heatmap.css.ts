@@ -137,6 +137,7 @@ export default css`
   text-align: center;
   font-size: var(--biowc-heatmap-axis-label-font-size, 1.5em);
   padding: var(--biowc-heatmap-axis-label-padding, 0.25em);
+  background: var(--biowc-heatmap-axis-label-background-color, #ffffff);
 }
 
 .left-container .axis-label,
