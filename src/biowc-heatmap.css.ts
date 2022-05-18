@@ -4,6 +4,7 @@ export default css`
 * { box-sizing: border-box; }
 
 :host {
+  position: relative;
   display: grid;
   grid-template-areas:
     '.    top     .    '
@@ -19,18 +20,42 @@ export default css`
     var(--biowc-heatmap-bottom-size, auto);
 }
 
+
+.zoom-overlay {
+  display: none;
+  z-index: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+:host(.zooming) {
+  cursor: zoom-in;
+}
+
+:host(.zooming) .zoom-overlay {
+  display: block;
+}
+
 .heatmap {
   overflow: auto;
   grid-area: heatmap;
 }
 
-.zoom-tooltip {
-  background: var(--biowc-heatmap-zoom-tooltip-background, #ffffff);
+.tooltip {
+  pointer-events: none;
   position: fixed;
-  top: var(--biowc-heatmap-zoom-tooltip-top, 0);
-  left: var(--biowc-heatmap-zoom-tooltip-left, 0);
+  top: calc(var(--biowc-heatmap-tooltip-top, 0) + 10px);
+  left: calc(var(--biowc-heatmap-tooltip-left, 0) + 10px);
   padding: 0.5em;
   border-radius: 0 0.5em 0.5em 0.5em;
+  background: var(--biowc-heatmap-zoom-tooltip-background, #ffffff);
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+}
+
+.tooltip.zoom-tooltip {
   cursor: zoom-in;
 }
 

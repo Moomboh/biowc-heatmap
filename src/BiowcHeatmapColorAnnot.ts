@@ -8,6 +8,11 @@ import { computed } from './util/computedDecorator.js';
 
 export type ColorLabels = { [key: string]: string };
 
+export type ColorHoverEvent = CustomEvent<{
+  color: string | null;
+  side: Side;
+}>;
+
 type ColorIndices = { [key: string]: Set<number> };
 
 export class BiowcHeatmapColorAnnot extends BiowcHeatmapSelectableMixin(
@@ -21,10 +26,13 @@ export class BiowcHeatmapColorAnnot extends BiowcHeatmapSelectableMixin(
   @property({ attribute: false })
   colorAnnots: string[] = [];
 
+  hoveredColor: string | null = null;
+
   render(): SVGTemplateResult {
     return svg`
       <svg
         @click=${this._handleClick}
+        @mouseleave=${this._handleMouseLeave}
         width="100%"
         height="100%"
         preserveAspectRatio="none"
@@ -39,7 +47,6 @@ export class BiowcHeatmapColorAnnot extends BiowcHeatmapSelectableMixin(
           (color, i) => svg`
           <rect
             @mouseenter=${this._handleMouseEnter}
-            @mouseleave=${this._handleMouseLeave}
             x="${this._horizontal ? i : 0}"
             y="${this._horizontal ? 0 : i}"
             width="1"
@@ -82,22 +89,52 @@ export class BiowcHeatmapColorAnnot extends BiowcHeatmapSelectableMixin(
   }
 
   private _handleMouseEnter(event: MouseEvent) {
-    const color = (event.target as SVGElement)?.getAttribute('fill');
+    const rectElement = event.target as SVGElement | null;
+    const i = parseInt(
+      (this._horizontal
+        ? rectElement?.getAttribute('x')
+        : rectElement?.getAttribute('y')) ?? '-1',
+      10
+    );
 
-    if (!color) {
+    if (i === -1) {
       return;
     }
 
+    const color = this.colorAnnots[i];
+
+    if (color === this.hoveredColor) {
+      return;
+    }
+
+    this.hoveredColor = color;
     this.hoveredIndices = new Set(this._colorIndices[color]);
     this._dispatchHoverEvent();
+    this._dispatchHoverColorEvent();
   }
 
   private _handleMouseLeave() {
+    this.hoveredColor = null;
     this.hoveredIndices = new Set();
     this._dispatchHoverEvent();
+    this._dispatchHoverColorEvent();
   }
 
   private _handleClick() {
     this._selectIndices(this.hoveredIndices);
+  }
+
+  private _dispatchHoverColorEvent() {
+    const hoverColorEvent: ColorHoverEvent = new CustomEvent(
+      'biowc-heatmap-annot-color-hover',
+      {
+        detail: {
+          side: this.side,
+          color: this.hoveredColor,
+        },
+      }
+    );
+
+    this.dispatchEvent(hoverColorEvent);
   }
 }
