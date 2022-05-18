@@ -48,6 +48,14 @@ or just in vanilla js:
     bottom: ['B1', 'B2', 'B3'],
   };
 
+  // Sets the axis labels
+  biowcHeatmap.axisLabels = {
+    top: 'Top',
+    left: 'Left',
+    right: 'Right',
+    bottom: 'Bottom',
+  };
+
   biowcHeatmap.colorAnnots =  {
     top: ['red', 'green', 'blue'],
     left: ['red', 'green', 'blue'],
