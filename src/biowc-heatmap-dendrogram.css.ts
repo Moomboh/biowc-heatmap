@@ -36,4 +36,5 @@ svg {
 
 path.selected {
     stroke-width: 3px;
+}
 `;
