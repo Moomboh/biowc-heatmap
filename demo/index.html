@@ -30,8 +30,8 @@
 
     #prdb-heatmap {
       height: 80vh;
-      --biowc-heatmap-top-size: 250px;
-      --biowc-heatmap-left-size: 220px;
+      --biowc-heatmap-top-size: 300px;
+      --biowc-heatmap-left-size: 250px;
       --biowc-heatmap-dendrogram-top-size: 150px;
       --biowc-heatmap-dendrogram-left-size: 120px;
     }
@@ -95,6 +95,14 @@
       left: ['L1', 'L2', 'L3'],
       right: ['R1', 'R2', 'R3'],
       bottom: ['B1', 'B2', 'B3'],
+    };
+
+    // Sets the axis labels
+    biowcHeatmap.axisLabels = {
+      top: 'Top',
+      left: 'Left',
+      right: 'Right',
+      bottom: 'Bottom',
     };
 
     biowcHeatmap.colorAnnots =  {

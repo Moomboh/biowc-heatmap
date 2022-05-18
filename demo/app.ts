@@ -35,6 +35,7 @@ function renderHeatmap(demoData: DemoData) {
         .colorAnnotLabels=${{
           top: demoData.xAnnotColorLabels,
         }}
+        .axisLabels=${demoData.axisLabels}
     ></biowc-heatmap>
     `,
     heatmapContainer

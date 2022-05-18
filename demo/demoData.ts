@@ -1,3 +1,4 @@
+import { AxisLabels } from '../src/BiowcHeatmap.js';
 import { ColorLabels } from '../src/BiowcHeatmapColorAnnot.js';
 import {
   DendrogramList,
@@ -13,6 +14,7 @@ export interface DemoData {
   xAnnotColors: string[];
   yAnnotColors?: string[];
   xAnnotColorLabels?: ColorLabels;
+  axisLabels: AxisLabels;
 }
 
 type ClusterDataEntry = [
@@ -140,5 +142,9 @@ export async function fetchDemoData(url: string): Promise<DemoData> {
     yDendrogram,
     xAnnotColors,
     xAnnotColorLabels,
+    axisLabels: {
+      top: 'Cell line',
+      left: 'Protein',
+    },
   };
 }
