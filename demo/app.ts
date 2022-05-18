@@ -32,6 +32,9 @@ function renderHeatmap(demoData: DemoData) {
         .colorAnnots=${{
           top: demoData.xAnnotColors,
         }}
+        .colorAnnotLabels=${{
+          top: demoData.xAnnotColorLabels,
+        }}
     ></biowc-heatmap>
     `,
     heatmapContainer

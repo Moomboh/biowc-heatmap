@@ -1,3 +1,4 @@
+import { ColorLabels } from '../src/BiowcHeatmapColorAnnot.js';
 import {
   DendrogramList,
   DendrogramNode,
@@ -11,6 +12,7 @@ export interface DemoData {
   yDendrogram: DendrogramNode | DendrogramList;
   xAnnotColors: string[];
   yAnnotColors?: string[];
+  xAnnotColorLabels?: ColorLabels;
 }
 
 type ClusterDataEntry = [
@@ -126,6 +128,10 @@ export async function fetchDemoData(url: string): Promise<DemoData> {
 
   const xAnnotColors = getXAnnotColors(prdbData.tissuedata);
 
+  const xAnnotColorLabels = Object.fromEntries(
+    Object.entries(tissueColorMap).map(x => x.reverse())
+  );
+
   return {
     data,
     xLabels,
@@ -133,5 +139,6 @@ export async function fetchDemoData(url: string): Promise<DemoData> {
     xDendrogram,
     yDendrogram,
     xAnnotColors,
+    xAnnotColorLabels,
   };
 }
