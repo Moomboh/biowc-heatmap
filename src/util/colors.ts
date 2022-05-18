@@ -56,16 +56,8 @@ function validateColorScaleConfig(config: ColorScaleConfig): void {
 }
 
 export const colorScale: (
-  colorConfig: string | ColorScaleConfig
-) => (value: number) => string = (colorConfig: string | ColorScaleConfig) => {
-  const colorScaleConfig =
-    typeof colorConfig === 'string'
-      ? {
-          colors: ['rgb(255,255,255)', colorConfig],
-          values: [0, 1],
-        }
-      : colorConfig;
-
+  colorScaleConfig: ColorScaleConfig
+) => (value: number) => string = (colorScaleConfig: ColorScaleConfig) => {
   validateColorScaleConfig(colorScaleConfig);
 
   const { colors, values: colorValues } = colorScaleConfig;

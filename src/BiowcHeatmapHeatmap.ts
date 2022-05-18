@@ -9,6 +9,13 @@ export type CellHoverEvent = CustomEvent<{
   y: number | null;
 }>;
 
+export const defaultCellColor = '#b40000';
+
+export const defaultCellColorScale: ColorScaleConfig = {
+  colors: ['#ffffff', defaultCellColor],
+  values: [0, 1],
+};
+
 export class BiowcHeatmapHeatmap extends LitElement {
   static styles = styles;
 
@@ -16,7 +23,7 @@ export class BiowcHeatmapHeatmap extends LitElement {
   data: number[][] = [];
 
   @property({ attribute: false })
-  color: string | ColorScaleConfig = '#b40000';
+  cellColorScale: ColorScaleConfig = defaultCellColorScale;
 
   @property({ attribute: false })
   hoveredRows: Set<number> = new Set();
@@ -121,9 +128,9 @@ export class BiowcHeatmapHeatmap extends LitElement {
     return this.data[0].length;
   }
 
-  @computed('color')
+  @computed('cellColorScale')
   private get _colorScale() {
-    return colorScale(this.color);
+    return colorScale(this.cellColorScale);
   }
 
   private _handleHoverCell(event: Event) {

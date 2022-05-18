@@ -68,15 +68,18 @@
 
     const biowcHeatmap = document.querySelector('#heatmap');
 
+    // Set the color of the heatmap cells
+    biowcHeatmap.cellColor = '#ff0000';
+
     // Sets the color scale which will be used to color the heatmap cells.
-    biowcHeatmap.color = {
+    // `.color` will be ignored if `.colorScale` is set
+    biowcHeatmap.cellColorScale = {
       colors: ['#0000bb', '#ffffff', '#ff0000'],
-      values: [-1, 0, 1]
+      values: [-2, 0, 1]
     };
-    // can also be set to a single color: `biowcHeatmap.color = '#ff0000';`
-    // which is equivalent to:
-    // `biowcHeatmap.color = { colors: ['#ffffff', '#ff0000'], values: [0, 1] };`
-    // values which are outside the range ov `values` will be correspondingly colored
+    // `biowcHeatmap.color = '#ff0000';` is equivalent to:
+    // `biowcHeatmap.colorScale = { colors: ['#ffffff', '#ff0000'], values: [0, 1] };`
+    // values which are outside the range of `values` will be correspondingly colored
     // with the color for the lowest or highest value in `colors`.
 
 

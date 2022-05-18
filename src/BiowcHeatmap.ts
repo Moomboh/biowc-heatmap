@@ -2,7 +2,10 @@ import { html, LitElement, HTMLTemplateResult } from 'lit';
 import { eventOptions, property, query, state } from 'lit/decorators.js';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 import styles from './biowc-heatmap.css.js';
-import { BiowcHeatmapHeatmap } from './BiowcHeatmapHeatmap.js';
+import {
+  BiowcHeatmapHeatmap,
+  defaultCellColor,
+} from './BiowcHeatmapHeatmap.js';
 import { BiowcHeatmapLabels, TextAlign } from './BiowcHeatmapLabels.js';
 import {
   BiowcHeatmapDendrogram,
@@ -87,8 +90,48 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   @property({ type: Number })
   zoomFactor = 1.1;
 
+  /**
+   * @deprecated since version 0.2.
+   * Will be deleted in version 1.0.
+   *
+   * TODO: Remove in version 1.0.
+   * */
+  @property({ type: String })
+  get color() {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `\`${this.constructor.name}.color\` is deprecated. Use \`${this.constructor.name}.cellColor\` instead.`
+    );
+    return this.cellColor;
+  }
+
+  set color(color: string) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `\`${this.constructor.name}.color\` is deprecated. Use \`${this.constructor.name}.cellColor\` instead.`
+    );
+    this.cellColor = color;
+  }
+
   @property({ attribute: false })
-  color: string | ColorScaleConfig = '#b40000';
+  cellColor: string = defaultCellColor;
+
+  @property({ attribute: false })
+  @computed('color', 'colorScale')
+  get cellColorScale(): ColorScaleConfig {
+    const { cellColor } = this;
+
+    return (
+      this._cellColorScale ?? {
+        colors: ['rgb(255,255,255)', cellColor],
+        values: [0, 1],
+      }
+    );
+  }
+
+  set cellColorScale(colorScale: ColorScaleConfig) {
+    this._cellColorScale = colorScale;
+  }
 
   @property({ attribute: false })
   data: number[][] = [];
@@ -155,6 +198,8 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   private _mouseClientY: number = -1;
 
   private _isMouseHovering = false;
+
+  private _cellColorScale: ColorScaleConfig | undefined;
 
   constructor() {
     super();
@@ -248,7 +293,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
       >
         <biowc-heatmap-heatmap
           .data=${this.data}
-          .color=${this.color}
+          .cellColorScale=${this.cellColorScale}
           .selectedRows=${this.selectedRows}
           .selectedCols=${this.selectedCols}
           @biowc-heatmap-cell-hover=${this._handleCellHover}
@@ -372,6 +417,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     );
   }
 
+  // TODO: Check if axis labels are shown and refactor to deduplicate above code
   @computed('_hasSideLabels', '_hasSideDendrogram', '_hasSideColorAnnots')
   private get _hasSide() {
     return Object.fromEntries(
