@@ -31,6 +31,10 @@ export type Labels = {
   [key in Side]?: string[];
 };
 
+export type AxisLabels = {
+  [key in Side]?: string;
+};
+
 export type Dendrograms = {
   [key in Side]?: DendrogramNode | DendrogramList;
 };
@@ -91,6 +95,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
   @property({ attribute: false })
   labels: Labels = {};
+
+  @property({ attribute: false })
+  axisLabels: AxisLabels = {};
 
   @property({ attribute: false })
   dendrograms: Dendrograms = {};
@@ -278,6 +285,14 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
             .zoomY=${this.zoomY}
             class="container ${side}-container"
           >
+            ${
+              this.axisLabels[side]
+                ? html`
+                <div class="axis-label">
+                  ${this.axisLabels[side]}
+                </div>`
+                : html``
+            }
             ${
               this._hasSideDendrogram[side]
                 ? html`
