@@ -32,12 +32,15 @@ or just in vanilla js:
   // can also be set to a single color: `biowcHeatmap.color = '#ff0000';`
   // which is equivalent to:
   // `biowcHeatmap.color = { colors: ['#ffffff', '#ff0000'], values: [0, 1] };`
+  // values which are outside the range ov `values` will be correspondingly colored
+  // with the color for the lowest or highest value in `colors`.
 
-  // Sets the data values which the cells will be colored based on (must be between 0 and 1).
+
+  // Sets the data values which the cells will be colored based on.
   biowcHeatmap.data = [
-    [0.2, 0.6, 0.3],
-    [0.1, 0.2, 0.7],
-    [0.5, 0.4, 1.0],
+    [-2, 0.6, -1],
+    [0.1, 0.0, -0.7],
+    [-0.5, 0.7, 2.0],
   ];
 
   // Sets the labels on the sides
@@ -56,12 +59,33 @@ or just in vanilla js:
     bottom: 'Bottom',
   };
 
+  // Set the colors for the color annotation bar
   biowcHeatmap.colorAnnots =  {
-    top: ['red', 'green', 'blue'],
-    left: ['red', 'green', 'blue'],
-    right: ['red', 'green', 'blue'],
-    bottom: ['red', 'green', 'blue'],
+    top: ['#1f77b4', '#1f77b4', '#ff7f0e'],
+    left: ['#1f77b4', '#1f77b4', '#ff7f0e'],
+    right: ['#1f77b4', '#1f77b4', '#ff7f0e'],
+    bottom: ['#1f77b4', '#1f77b4', '#ff7f0e'],
   };
+
+  // Set labels for the colors in the color annotation bar
+  biowcHeatmap.colorAnnotLabels =  {
+    top: {
+      '#1f77b4': 'A',
+      '#ff7f0e': 'B',
+    },
+    left: {
+      '#1f77b4': 'C',
+      '#ff7f0e': 'D',
+    },
+    right: {
+      '#1f77b4': 'E',
+      '#ff7f0e': 'F',
+    },
+    bottom: {
+      '#1f77b4': 'H',
+      '#ff7f0e': 'I',
+    }
+  }
 
   // Pass dendrograms as tree structure
   const dendrogramTree = {
@@ -100,19 +124,6 @@ or just in vanilla js:
     bottom: dendrogramArray,
   };
 </script>
-
-<style>
-  /* you might want to set sizes of the sides and annotation elements explicitly.
-    * this can be done via the following CSS variables, which accept any valid CSS unit:
-  */
-  #heatmap {
-    --biowc-heatmap-top-size: 200px;
-    --biowc-heatmap-dendrogram-top-size: 100px;
-    --biowc-heatmap-label-top-size: 60px;
-    --biowc-heatmap-color-annot-top-size: 40px;
-    /* analogous CSS variables exist for left, right and bottom */
-  }
-</style>
 ```
 
 ## Contributing

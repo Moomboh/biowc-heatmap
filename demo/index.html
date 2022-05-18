@@ -103,12 +103,33 @@
       bottom: 'Bottom',
     };
 
+    // Set the colors for the color annotation bar
     biowcHeatmap.colorAnnots =  {
-      top: ['#880000', '#008800', '#000088'],
-      left: ['#880000', '#008800', '#000088'],	
-      right: ['#880000', '#008800', '#000088'],
-      bottom: ['#880000', '#008800', '#000088'],
+      top: ['#1f77b4', '#1f77b4', '#ff7f0e'],
+      left: ['#1f77b4', '#1f77b4', '#ff7f0e'],	
+      right: ['#1f77b4', '#1f77b4', '#ff7f0e'],
+      bottom: ['#1f77b4', '#1f77b4', '#ff7f0e'],
     };
+
+    // Set labels for the colors in the color annotation bar
+    biowcHeatmap.colorAnnotLabels =  {
+      top: {
+        '#1f77b4': 'A',
+        '#ff7f0e': 'B',
+      },
+      left: {
+        '#1f77b4': 'C',
+        '#ff7f0e': 'D',
+      },
+      right: {
+        '#1f77b4': 'E',
+        '#ff7f0e': 'F',
+      },
+      bottom: {
+        '#1f77b4': 'H',
+        '#ff7f0e': 'I',
+      }
+    }
 
     // Pass dendrograms as tree structure
     const dendrogramTree = {
