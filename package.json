@@ -22,7 +22,8 @@
   "module": "dist/src/index.js",
   "exports": {
     ".": "./dist/src/index.js",
-    "./biowc-heatmap.js": "./dist/src/biowc-heatmap.js"
+    "./biowc-heatmap.js": "./dist/src/biowc-heatmap.js",
+    "./biowc-heatmap-legend.js": "./dist/src/biowc-heatmap-legend.js"
   },
   "scripts": {
     "analyze": "cem analyze --litelement",

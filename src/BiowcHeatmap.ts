@@ -30,6 +30,8 @@ export enum Side {
   bottom = 'bottom',
 }
 
+export const SIDES = Object.values(Side);
+
 export type Labels = {
   [key in Side]?: string[];
 };
