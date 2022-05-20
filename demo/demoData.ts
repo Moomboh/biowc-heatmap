@@ -143,7 +143,7 @@ export async function fetchDemoData(url: string): Promise<DemoData> {
     xAnnotColors,
     xAnnotColorLabels,
     axisLabels: {
-      top: 'Cell line',
+      top: 'Sample source',
       left: 'Protein',
     },
   };

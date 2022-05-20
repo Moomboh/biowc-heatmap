@@ -1,5 +1,7 @@
 import { html, render } from 'lit';
 import '../src/biowc-heatmap.js';
+import { BiowcHeatmap } from '../src/BiowcHeatmap.js';
+import { BiowcHeatmapLegend } from '../src/BiowcHeatmapLegend.js';
 import { fetchDemoData, DemoData } from './demoData.js';
 
 const SMALL_DATASET_URL =
@@ -13,7 +15,7 @@ const LARGE_DATASET_URL =
 
 function renderHeatmap(demoData: DemoData) {
   const heatmapContainer = document.querySelector(
-    '#heatmap-container'
+    '#prdb-container'
   ) as HTMLElement;
 
   render(
@@ -37,14 +39,32 @@ function renderHeatmap(demoData: DemoData) {
         }}
         .axisLabels=${demoData.axisLabels}
     ></biowc-heatmap>
+    <biowc-heatmap-legend
+      id="prdb-legend"
+      .formatColorTick=${(d: number) => {
+        if (d === 0) {
+          return 'low';
+        }
+
+        if (d === 1) {
+          return 'high';
+        }
+
+        return '';
+      }}
+    ></biowc-heatmap-legend>
     `,
     heatmapContainer
   );
+
+  const heatmap = document.querySelector('#prdb-heatmap') as BiowcHeatmap;
+  const legend = document.querySelector('#prdb-legend') as BiowcHeatmapLegend;
+  legend.forHeatmap = heatmap;
 }
 
 function renderLoading() {
   const heatmapContainer = document.querySelector(
-    '#heatmap-container'
+    '#prdb-container'
   ) as HTMLElement;
 
   render(

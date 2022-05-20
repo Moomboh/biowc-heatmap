@@ -18,27 +18,32 @@ or just in vanilla js:
 
 ```html
 <biowc-heatmap id="heatmap"></biowc-heatmap>
+<biowc-heatmap-legend id="legend"></biowc-heatmap-legend>
 
 <script type="module">
   import '../dist/src/biowc-heatmap.js';
+  import '../dist/src/biowc-heatmap-legend.js';
 
   const biowcHeatmap = document.querySelector('#heatmap');
 
+  // Set the color of the heatmap cells
+  biowcHeatmap.cellColor = '#ff0000';
+
   // Sets the color scale which will be used to color the heatmap cells.
-  biowcHeatmap.color = {
+  // `.color` will be ignored if `.colorScale` is set
+  biowcHeatmap.cellColorScale = {
     colors: ['#0000bb', '#ffffff', '#ff0000'],
-    values: [-1, 0, 1]
+    values: [-2, 0, 1]
   };
-  // can also be set to a single color: `biowcHeatmap.color = '#ff0000';`
-  // which is equivalent to:
-  // `biowcHeatmap.color = { colors: ['#ffffff', '#ff0000'], values: [0, 1] };`
-  // values which are outside the range ov `values` will be correspondingly colored
+  // `biowcHeatmap.color = '#ff0000';` is equivalent to:
+  // `biowcHeatmap.colorScale = { colors: ['#ffffff', '#ff0000'], values: [0, 1] };`
+  // values which are outside the range of `values` will be correspondingly colored
   // with the color for the lowest or highest value in `colors`.
 
 
   // Sets the data values which the cells will be colored based on.
   biowcHeatmap.data = [
-    [-2, 0.6, -1],
+    [-3, 0.6, -1],
     [0.1, 0.0, -0.7],
     [-0.5, 0.7, 2.0],
   ];
@@ -123,6 +128,11 @@ or just in vanilla js:
     right: dendrogramTree,
     bottom: dendrogramArray,
   };
+
+  // Set the `forHeatmap` property of the legend to the heatmap just created
+  // The legend will then be created according to the properties set on the heatmap
+  const biowcHeatmapLegend = document.querySelector('#legend');
+  biowcHeatmapLegend.forHeatmap = biowcHeatmap;
 </script>
 ```
 
