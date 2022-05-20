@@ -39,8 +39,8 @@
     "storybook:build": "tsc && npm run analyze -- --exclude dist && build-storybook",
     "prepare": "npm run build",
     "release": "standard-version",
-    "release:minor": "standard-version --release-as minor",
     "release:patch": "standard-version --release-as patch",
+    "release:minor": "standard-version --release-as minor",
     "release:major": "standard-version --release-as major"
   },
   "dependencies": {
