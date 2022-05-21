@@ -20,6 +20,9 @@ import { computed } from './util/computedDecorator.js';
 export class BiowcHeatmapLegend extends LitElement {
   static styles = styles;
 
+  @property({ type: String, attribute: 'color-scale-title' })
+  colorScaleTitle: string = '';
+
   @property({ attribute: false })
   forHeatmap: BiowcHeatmap | null = null;
 
@@ -34,13 +37,16 @@ export class BiowcHeatmapLegend extends LitElement {
     }
 
     return html`
-      <div class="color-scale">
+      <div class="color-annot" part="color-annot">
+        ${this._renderColorAnnotLabels()}
+      </div>
+      <div class="color-scale-title" part="color-scale-title">
+        ${this.colorScaleTitle}
+      </div>
+      <div class="color-scale" part="color-scale">
         ${this._renderColorScaleGradient()}
         ${this._renderColorScaleTicks()}
         ${this._renderColorScaleLabels()}
-      </div>
-      <div class="color-annot">
-        ${this._renderColorAnnotLabels()}
       </div>
     `;
   }

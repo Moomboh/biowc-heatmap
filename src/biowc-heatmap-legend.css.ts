@@ -5,7 +5,6 @@ export default css`
 
 :host {
     display: block;
-    display: flex;
 }
 
 svg {
@@ -16,7 +15,12 @@ svg {
     position: relative;
     width: var(--biowc-heatmap-legend-color-scale-gradient-width, 64px);
     height: var(--biowc-heatmap-legend-color-scale-gradient-height, 200px);
-    margin-right: 1em;
+    margin: 1em 1em 1em 0;
+}
+
+.color-scale-title {
+    font-size: 1.1em;
+    margin-top: 1.5em;
 }
 
 .color-scale-gradient {
@@ -55,7 +59,7 @@ svg {
 
 .axis-label {
     font-size: 1.1em;
-    margin-top: 0.5em;
+    margin-top: 1em;
 }
 
 .color-annot-label-color {
