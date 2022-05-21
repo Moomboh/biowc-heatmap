@@ -41,6 +41,7 @@ function renderHeatmap(demoData: DemoData) {
     ></biowc-heatmap>
     <biowc-heatmap-legend
       id="prdb-legend"
+      color-scale-title="log10 normalized protein expression"
       .formatColorTick=${(d: number) => {
         if (d === 0) {
           return 'low';

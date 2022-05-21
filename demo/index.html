@@ -26,7 +26,7 @@
 
     #prdb-legend {
       width: 15%;
-      margin: 25% 0 0 3em;
+      margin: 15% 0 0 3em;
     }
 
     #prdb-heatmap {
@@ -53,10 +53,6 @@
     #heatmap {
       margin: 0 auto;
       max-width: 800px;
-    }
-
-    #legend {
-      margin-top: 15%;
     }
   </style>
 
@@ -193,6 +189,9 @@
       // The legend will then be created according to the properties set on the heatmap
       const biowcHeatmapLegend = document.querySelector('#legend');
       biowcHeatmapLegend.forHeatmap = biowcHeatmap;
+
+      // Set the title for the color scale in the legend
+      biowcHeatmapLegend.colorScaleTitle = 'Unit description'
     </script>
   </div>
 

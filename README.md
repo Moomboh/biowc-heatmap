@@ -133,6 +133,9 @@ or just in vanilla js:
   // The legend will then be created according to the properties set on the heatmap
   const biowcHeatmapLegend = document.querySelector('#legend');
   biowcHeatmapLegend.forHeatmap = biowcHeatmap;
+
+  // Set the title for the color scale in the legend
+  biowcHeatmapLegend.colorScaleTitle = 'Unit description'
 </script>
 ```
 
