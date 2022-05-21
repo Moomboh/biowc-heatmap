@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/Moomboh/biowc-heatmap/compare/v0.2.1...v0.3.0) (2022-05-21)
+
+
+### Features
+
+* legend: title for color scale and restyle ([273c860](https://github.com/Moomboh/biowc-heatmap/commits/273c8604bd91f435ee0b8666ecab99cdc634ec55))
+
 ### [0.2.1](https://github.com/Moomboh/biowc-heatmap/compare/v0.2.0...v0.2.1) (2022-05-21)
 
 
