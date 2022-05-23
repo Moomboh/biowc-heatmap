@@ -85,8 +85,6 @@ describe('BiowcHeatmapDendrogram', () => {
       ></biowc-heatmap-dendrogram>
     `);
 
-    await dendrogramFromList.updateComplete;
-
     expect(dendrogramFromTree).shadowDom.to.equal(
       dendrogramFromList.shadowRoot?.innerHTML
     );

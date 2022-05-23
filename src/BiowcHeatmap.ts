@@ -1,5 +1,11 @@
 import { html, LitElement, HTMLTemplateResult } from 'lit';
-import { eventOptions, property, query, state } from 'lit/decorators.js';
+import {
+  eventOptions,
+  property,
+  query,
+  queryAll,
+  state,
+} from 'lit/decorators.js';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 import styles from './biowc-heatmap.css.js';
 import {
@@ -180,6 +186,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   @query('.bottom-container')
   private _bottomContainer: HTMLElement | undefined;
 
+  @queryAll('.dendrogram')
+  private _dendrogramElements: NodeList | undefined;
+
   @state()
   private _isZooming = false;
 
@@ -234,6 +243,14 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
       }
       ${this._isZooming ? this._renderZoomTooltip() : ''}
     `;
+  }
+
+  updated(changedProperties: Map<string, unknown>) {
+    if (changedProperties.has('dendrograms')) {
+      this._dendrogramElements?.forEach((dendrogram: Node) => {
+        (dendrogram as BiowcHeatmapDendrogram).render();
+      });
+    }
   }
 
   private _setComputedStyleProps() {
@@ -477,6 +494,10 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   private _handleMouseMove(event: MouseEvent) {
     this._mouseClientX = event.clientX;
     this._mouseClientY = event.clientY;
+
+    // TODO: improve performace
+    // setting this as a style attribute causees a "Recalculate style" which takes
+    // up to 200ms
 
     this.style.setProperty(
       '--biowc-heatmap-tooltip-top',
