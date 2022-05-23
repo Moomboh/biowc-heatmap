@@ -2,7 +2,7 @@ import { css } from 'lit';
 
 export default css`
 :host {
-    overflow: auto;
+    overflow: hidden;
     transform: translateZ(0);
 }
 

@@ -1,5 +1,5 @@
 import { html, LitElement, HTMLTemplateResult } from 'lit';
-import { eventOptions, property, query, state } from 'lit/decorators.js';
+import { eventOptions, property, query } from 'lit/decorators.js';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 import styles from './biowc-heatmap.css.js';
 import {
@@ -16,7 +16,6 @@ import { computed } from './util/computedDecorator.js';
 import { BiowcHeatmapZoomContainer } from './BiowcHeatmapZoomContainer.js';
 import {
   BiowcHeatmapColorAnnot,
-  ColorHoverEvent,
   ColorLabels,
 } from './BiowcHeatmapColorAnnot.js';
 import { HoverEvent } from './mixins/BiowcHeatmapHoverableMixin.js';
@@ -180,27 +179,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   @query('.bottom-container')
   private _bottomContainer: HTMLElement | undefined;
 
-  @state()
-  private _isZooming = false;
-
-  @state()
-  private _zoomingX = 1;
-
-  @state()
-  private _zoomingY = 1;
-
-  @state()
-  private _hoveredAnnotColor: string | null = null;
-
-  @state()
-  private _hoveredAnnotColorSide: Side | null = null;
-
-  private _mouseClientX: number = -1;
-
-  private _mouseClientY: number = -1;
-
-  private _isMouseHovering = false;
-
   private _cellColorScale: ColorScaleConfig | undefined;
 
   constructor() {
@@ -212,68 +190,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   }
 
   render(): HTMLTemplateResult {
-    this._setComputedStyleProps();
-
     return html`
       ${this._renderHeatmap()}
       ${this._renderSides()}
-      ${
-        this._hoveredAnnotColor && !this._isZooming
-          ? this._renderColorAnnotTooltip()
-          : ''
-      }
-      ${this._isZooming ? this._renderZoomTooltip() : ''}
-    `;
-  }
-
-  private _setComputedStyleProps() {
-    for (const side of Object.keys(Side)) {
-      const sideSizeProp = `--biowc-heatmap-${side}-size`;
-
-      if (!this._hasSide[side]) {
-        this.style.setProperty(sideSizeProp, '0');
-      } else {
-        this.style.removeProperty(sideSizeProp);
-      }
-    }
-  }
-
-  private _renderZoomTooltip(): HTMLTemplateResult {
-    return html`
-      <div class="zoom-overlay"></div>
-      <div class="tooltip zoom-tooltip">
-        <div class="zoom-y-text">
-          Vertical zoom: ${Math.round(this._zoomingY * 100)}%
-        </div>
-        <div class="zoom-x-text">
-          Horizontal zoom: ${Math.round(this._zoomingX * 100)}%
-        </div>
-      </div>
-    `;
-  }
-
-  private _renderColorAnnotTooltip(): HTMLTemplateResult {
-    const color = this._hoveredAnnotColor;
-    const side = this._hoveredAnnotColorSide;
-
-    if (!color || !side) {
-      return html``;
-    }
-
-    const colorAnnotSideLabels = this.colorAnnotLabels[side];
-
-    if (!colorAnnotSideLabels) {
-      return html``;
-    }
-
-    if (!colorAnnotSideLabels[color]) {
-      return html``;
-    }
-
-    return html`
-      <div class="tooltip">
-        ${colorAnnotSideLabels[color]}
-      </div>
     `;
   }
 
@@ -373,9 +292,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                   .selectedIndices=${selectedIndices}
                   @biowc-heatmap-side-hover=${this._handleHover(horizontal)}
                   @biowc-heatmap-side-select=${this._handleSelect(horizontal)}
-                  @biowc-heatmap-annot-color-hover=${
-                    this._handleColorAnnotHover
-                  }
                   class="color-annot"
                 ></biowc-heatmap-color-annot>`
                 : html``
@@ -462,11 +378,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
       this._dispatchSelectEvent();
     };
-  }
-
-  private _handleColorAnnotHover(event: ColorHoverEvent) {
-    this._hoveredAnnotColor = event.detail.color;
-    this._hoveredAnnotColorSide = event.detail.side;
   }
 
   @eventOptions({ passive: true, capture: true })
