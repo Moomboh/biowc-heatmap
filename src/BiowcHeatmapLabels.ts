@@ -68,6 +68,7 @@ export class BiowcHeatmapLabels extends BiowcHeatmapSelectableMixin(
               ${this.hoveredIndices.has(index) ? 'hover' : ''}
               ${this.selectedIndices.has(index) ? 'selected' : ''}
             "
+            title="${label}"
           >
             ${label}
           </div>
