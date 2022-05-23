@@ -215,7 +215,18 @@ export class BiowcHeatmapDendrogram extends BiowcHeatmapSelectableMixin(
       <svg
         width="100%"
         height="100%"
-        viewBox="0 0 ${this._viewboxWidth} ${this._viewboxHeight}"
+        viewBox="
+         ${this.side === Side.left ? -this._viewboxWidth * 0.02 : 0}
+         ${this.side === Side.top ? -this._viewboxHeight * 0.02 : 0}
+         ${
+           this._viewboxWidth +
+           (this.side === Side.right ? this._viewboxWidth * 0.02 : 0)
+         }
+         ${
+           this._viewboxHeight +
+           (this.side === Side.bottom ? this._viewboxHeight * 0.02 : 0)
+         }
+        "
         preserveAspectRatio="none"
       >
         ${this._dendrogramPaths.map((path, index) =>
