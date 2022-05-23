@@ -209,16 +209,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     this.addEventListener('wheel', this._handleWheel.bind(this), {
       capture: true,
     });
-
-    this.addEventListener('mouseenter', this._handleMouseEnter.bind(this));
-    this.addEventListener('mouseleave', this._handleMouseLeave.bind(this));
-
-    window.addEventListener('mousemove', this._handleMouseMove.bind(this), {
-      passive: true,
-    });
-
-    window.addEventListener('keydown', this._handleControlDown.bind(this));
-    window.addEventListener('keyup', this._handleControlUp.bind(this));
   }
 
   render(): HTMLTemplateResult {
@@ -432,34 +422,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     );
   }
 
-  private _handleMouseEnter() {
-    this._isMouseHovering = true;
-  }
-
-  private _handleMouseLeave() {
-    this._isMouseHovering = false;
-  }
-
-  private _handleControlDown(event: KeyboardEvent) {
-    if (event.key === 'Control' && this._isMouseHovering) {
-      if (!this._isZooming) {
-        this.classList.add('zooming');
-        this._isZooming = true;
-        this._zoomingX = this.zoomX;
-        this._zoomingY = this.zoomY;
-      }
-    }
-  }
-
-  private _handleControlUp(event: KeyboardEvent) {
-    if (event.key === 'Control') {
-      this.classList.remove('zooming');
-      this._isZooming = false;
-      this.zoomX = this._zoomingX;
-      this.zoomY = this._zoomingY;
-    }
-  }
-
   private _handleWheel(event: WheelEvent) {
     if (event.ctrlKey) {
       event.preventDefault();
@@ -467,26 +429,11 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
         event.deltaY < 0 ? this.zoomFactor : 1 / this.zoomFactor;
 
       if (event.shiftKey) {
-        this._zoomingX = Math.max(1, this._zoomingX * deltaZoomFactor);
+        this.zoomX = Math.max(1, this.zoomX * deltaZoomFactor);
       } else {
-        this._zoomingY = Math.max(1, this._zoomingY * deltaZoomFactor);
+        this.zoomY = Math.max(1, this.zoomY * deltaZoomFactor);
       }
     }
-  }
-
-  private _handleMouseMove(event: MouseEvent) {
-    this._mouseClientX = event.clientX;
-    this._mouseClientY = event.clientY;
-
-    this.style.setProperty(
-      '--biowc-heatmap-tooltip-top',
-      `${this._mouseClientY}px`
-    );
-
-    this.style.setProperty(
-      '--biowc-heatmap-tooltip-left',
-      `${this._mouseClientX}px`
-    );
   }
 
   private _handleHover(horizontal: boolean) {
