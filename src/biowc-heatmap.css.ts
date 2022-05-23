@@ -41,6 +41,7 @@ export default css`
 
 .heatmap {
   overflow: auto;
+  transform: translateZ(0);
   grid-area: heatmap;
 }
 

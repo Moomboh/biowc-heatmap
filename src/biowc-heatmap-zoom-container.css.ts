@@ -2,7 +2,8 @@ import { css } from 'lit';
 
 export default css`
 :host {
-    overflow: hidden;
+    overflow: auto;
+    transform: translateZ(0);
 }
 
 ::slotted(*) {
