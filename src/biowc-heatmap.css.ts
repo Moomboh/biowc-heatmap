@@ -39,25 +39,16 @@ export default css`
   display: block;
 }
 
-.heatmap {
+.heatmap-container {
   overflow: auto;
   transform: translateZ(0);
   grid-area: heatmap;
 }
 
-.tooltip {
-  pointer-events: none;
-  position: fixed;
-  top: calc(var(--biowc-heatmap-tooltip-top, 0) + 10px);
-  left: calc(var(--biowc-heatmap-tooltip-left, 0) + 10px);
-  padding: 0.5em;
-  border-radius: 0 0.5em 0.5em 0.5em;
-  background: var(--biowc-heatmap-zoom-tooltip-background, #ffffff);
-  box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
-}
-
-.tooltip.zoom-tooltip {
-  cursor: zoom-in;
+.heatmap {
+  transform: translateZ(0);
+  width: 100%;
+  height: 100%;
 }
 
 .top-container {

@@ -10,11 +10,27 @@ export class BiowcHeatmapZoomContainer extends LitElement {
   @property({ attribute: false })
   side: Side = Side.left;
 
-  @property({ attribute: false })
-  zoomX = 1;
+  get zoomX() {
+    return this._zoomX;
+  }
 
-  @property({ attribute: false })
-  zoomY = 1;
+  set zoomX(value: number) {
+    this._zoomX = value;
+    this._updateStyle();
+  }
+
+  get zoomY() {
+    return this._zoomY;
+  }
+
+  set zoomY(value: number) {
+    this._zoomY = value;
+    this._updateStyle();
+  }
+
+  private _zoomX = 1;
+
+  private _zoomY = 1;
 
   render(): HTMLTemplateResult {
     return html`
@@ -22,29 +38,15 @@ export class BiowcHeatmapZoomContainer extends LitElement {
     `;
   }
 
-  updated(changedProperties: Map<string, unknown>) {
+  private _updateStyle() {
     this.style.setProperty('overflow-y', '');
     this.style.setProperty('overflow-x', '');
 
-    if (changedProperties.has('zoomX') && this._horizontal) {
-      this.style.setProperty(
-        '--biowc-heatmap-zoom-width',
-        `${this.zoomX * 100}%`
-      );
-    }
-
-    if (changedProperties.has('zoomY') && !this._horizontal) {
-      this.style.setProperty(
-        '--biowc-heatmap-zoom-height',
-        `${this.zoomY * 100}%`
-      );
-    }
-
-    if (changedProperties.has('zoomX') && this.zoomX > 1 && !this._horizontal) {
+    if (this.zoomX > 1 && !this._horizontal) {
       this.style.setProperty('overflow-x', 'scroll');
     }
 
-    if (changedProperties.has('zoomY') && this.zoomY > 1 && this._horizontal) {
+    if (this.zoomY > 1 && this._horizontal) {
       this.style.setProperty('overflow-y', 'scroll');
     }
   }

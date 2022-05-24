@@ -1,5 +1,5 @@
 import { html, LitElement, HTMLTemplateResult } from 'lit';
-import { eventOptions, property, query } from 'lit/decorators.js';
+import { eventOptions, property, query, queryAll } from 'lit/decorators.js';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 import styles from './biowc-heatmap.css.js';
 import {
@@ -18,8 +18,14 @@ import {
   BiowcHeatmapColorAnnot,
   ColorLabels,
 } from './BiowcHeatmapColorAnnot.js';
-import { HoverEvent } from './mixins/BiowcHeatmapHoverableMixin.js';
-import { SelectEvent } from './mixins/BiowcHeatmapSelectableMixin.js';
+import {
+  BiowcHeatmapHoverableInterface,
+  HoverEvent,
+} from './mixins/BiowcHeatmapHoverableMixin.js';
+import {
+  BiowcHeatmapSelectableInterface,
+  SelectEvent,
+} from './mixins/BiowcHeatmapSelectableMixin.js';
 import { ColorScaleConfig } from './util/colors.js';
 
 export enum Side {
@@ -81,12 +87,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
       'biowc-heatmap-color-annot': BiowcHeatmapColorAnnot,
     };
   }
-
-  @property({ type: Number })
-  zoomX = 1;
-
-  @property({ type: Number })
-  zoomY = 1;
 
   @property({ type: Number })
   zoomFactor = 1.1;
@@ -152,32 +152,110 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   @property({ attribute: false })
   colorAnnotLabels: ColorAnnotLabels = {};
 
-  @property({ attribute: false })
-  hoveredRows: Set<number> = new Set();
+  get zoomX() {
+    return this._zoomX;
+  }
 
-  @property({ attribute: false })
-  hoveredCols: Set<number> = new Set();
+  set zoomX(zoomX: number) {
+    this._zoomX = zoomX;
+    this._updateZoomX(zoomX);
+  }
 
-  @property({ attribute: false })
-  selectedRows: Set<number> = new Set();
+  get zoomY() {
+    return this._zoomY;
+  }
 
-  @property({ attribute: false })
-  selectedCols: Set<number> = new Set();
+  set zoomY(zoomY: number) {
+    this._zoomY = zoomY;
+    this._updateZoomY(zoomY);
+  }
+
+  get hoveredRows(): Set<number> {
+    return this._hoveredRows;
+  }
+
+  set hoveredRows(hoveredRows: Set<number>) {
+    this._hoveredRows = hoveredRows;
+    this._updateHoveredRows(this._hoveredRows);
+  }
+
+  get hoveredCols(): Set<number> {
+    return this._hoveredCols;
+  }
+
+  set hoveredCols(hoveredCols: Set<number>) {
+    this._hoveredCols = hoveredCols;
+    this._updateHoveredCols(this._hoveredCols);
+  }
+
+  get selectedRows(): Set<number> {
+    return this._selectedRows;
+  }
+
+  set selectedRows(selectedRows: Set<number>) {
+    this._selectedRows = selectedRows;
+    this._updateSelectedRows(this._selectedRows);
+  }
+
+  get selectedCols(): Set<number> {
+    return this._selectedCols;
+  }
+
+  set selectedCols(selectedCols: Set<number>) {
+    this._selectedCols = selectedCols;
+    this._updateSelectedCols(this._selectedCols);
+  }
+
+  private _zoomX = 1;
+
+  private _zoomY = 1;
+
+  private _hoveredRows: Set<number> = new Set();
+
+  private _hoveredCols: Set<number> = new Set();
+
+  private _selectedRows: Set<number> = new Set();
+
+  private _selectedCols: Set<number> = new Set();
 
   @query('.heatmap')
+  private _heatmap: HTMLElement | undefined;
+
+  @query('.heatmap-container')
   private _heatmapContainer: HTMLElement | undefined;
 
+  @queryAll('.container')
+  private _zoomContainers: BiowcHeatmapZoomContainer[] | undefined;
+
   @query('.top-container')
-  private _topContainer: HTMLElement | undefined;
+  private _topContainer: BiowcHeatmapZoomContainer | undefined;
 
   @query('.left-container')
-  private _leftContainer: HTMLElement | undefined;
+  private _leftContainer: BiowcHeatmapZoomContainer | undefined;
 
   @query('.right-container')
-  private _rightContainer: HTMLElement | undefined;
+  private _rightContainer: BiowcHeatmapZoomContainer | undefined;
 
   @query('.bottom-container')
-  private _bottomContainer: HTMLElement | undefined;
+  private _bottomContainer: BiowcHeatmapZoomContainer | undefined;
+
+  @queryAll('.row-hoverable')
+  private _rowHoverables: HTMLElement[] | undefined;
+
+  @queryAll('.col-hoverable')
+  private _colHoverables: HTMLElement[] | undefined;
+
+  @queryAll('.row-selectable')
+  private _rowSelectables: HTMLElement[] | undefined;
+
+  @queryAll('.col-selectable')
+  private _colSelectables: HTMLElement[] | undefined;
+
+  @queryAll('.x-zoomable')
+  private _xZoomables: HTMLElement[] | undefined;
+
+  @queryAll('.y-zoomable')
+  private _yZoomables: HTMLElement[] | undefined;
 
   private _cellColorScale: ColorScaleConfig | undefined;
 
@@ -199,19 +277,14 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   private _renderHeatmap(): HTMLTemplateResult {
     return html`
       <div 
-        class="heatmap"
+        class="heatmap-container"
         @scroll="${this._handleHeatmapScroll}"
       >
         <biowc-heatmap-heatmap
           .data=${this.data}
           .cellColorScale=${this.cellColorScale}
-          .selectedRows=${this.selectedRows}
-          .selectedCols=${this.selectedCols}
           @biowc-heatmap-cell-hover=${this._handleCellHover}
-          style="
-            width: ${this.zoomX * 100}%;
-            height: ${this.zoomY * 100}%;
-          "
+          class="heatmap"
         ></biowc-heatmap-heatmap>
       </div>
     `;
@@ -225,10 +298,11 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
         }
 
         const horizontal = side === Side.top || side === Side.bottom;
-        const hoveredIndices = horizontal ? this.hoveredCols : this.hoveredRows;
-        const selectedIndices = horizontal
-          ? this.selectedCols
-          : this.selectedRows;
+        const hoverableClass = horizontal ? 'col-hoverable' : 'row-hoverable';
+        const selectableClass = horizontal
+          ? 'col-selectable'
+          : 'row-selectable';
+        const zoomableClass = horizontal ? 'x-zoomable' : 'y-zoomable';
         const textAlign =
           side === Side.left || side === Side.bottom
             ? TextAlign.right
@@ -237,8 +311,6 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
         return html`
           <biowc-heatmap-zoom-container
             .side=${side}
-            .zoomX=${this.zoomX}
-            .zoomY=${this.zoomY}
             class="container ${side}-container"
           >
             ${
@@ -255,13 +327,11 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                 <biowc-heatmap-dendrogram
                   .dendrogram=${this.dendrograms[side]!}
                   .side=${side}
-                  .hoveredIndices=${hoveredIndices}
-                  .selectedIndices=${selectedIndices}
                   @biowc-heatmap-side-select=
                     ${this._handleSelect(horizontal)}
                   @biowc-heatmap-side-hover=
                     ${this._handleHover(horizontal)}
-                  class="dendrogram"
+                  class="dendrogram ${selectableClass} ${hoverableClass} ${zoomableClass}"
                 ></biowc-heatmap-dendrogram>`
                 : html``
             }
@@ -272,12 +342,10 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                 <biowc-heatmap-labels
                   .labels=${this.labels[side]}
                   ?horizontal=${horizontal}
-                  .hoveredIndices=${hoveredIndices}
-                  .selectedIndices=${selectedIndices}
                   @biowc-heatmap-side-hover=${this._handleHover(horizontal)}
                   @biowc-heatmap-side-select=${this._handleSelect(horizontal)}
                   textalign=${textAlign}
-                  class="labels"
+                  class="labels ${selectableClass} ${hoverableClass} ${zoomableClass}"
                 ></biowc-heatmap-labels>`
                 : html``
             }
@@ -288,11 +356,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                 <biowc-heatmap-color-annot
                   .colorAnnots=${this.colorAnnots[side]}
                   .side=${side}
-                  .hoveredIndices=${hoveredIndices}
-                  .selectedIndices=${selectedIndices}
                   @biowc-heatmap-side-hover=${this._handleHover(horizontal)}
                   @biowc-heatmap-side-select=${this._handleSelect(horizontal)}
-                  class="color-annot"
+                  class="color-annot ${selectableClass} ${hoverableClass} ${zoomableClass}"
                 ></biowc-heatmap-color-annot>`
                 : html``
             }
@@ -336,6 +402,76 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
           this._hasSideColorAnnots[side],
       ])
     );
+  }
+
+  private _updateSelectedRows(selectedRows: Set<number>) {
+    this._rowSelectables?.forEach(s => {
+      const selectable = s as HTMLElement & BiowcHeatmapSelectableInterface;
+      selectable.selectedIndices = selectedRows;
+    });
+  }
+
+  private _updateSelectedCols(selectedCols: Set<number>) {
+    this._colSelectables?.forEach(s => {
+      const selectable = s as HTMLElement & BiowcHeatmapSelectableInterface;
+      selectable.selectedIndices = selectedCols;
+    });
+  }
+
+  private _updateHoveredRows(hoveredRows: Set<number>) {
+    this._rowHoverables?.forEach(s => {
+      const hoverable = s as HTMLElement & BiowcHeatmapHoverableInterface;
+      hoverable.hoveredIndices = hoveredRows;
+    });
+  }
+
+  private _updateHoveredCols(hoveredCols: Set<number>) {
+    this._colHoverables?.forEach(s => {
+      const hoverable = s as HTMLElement & BiowcHeatmapHoverableInterface;
+      hoverable.hoveredIndices = hoveredCols;
+    });
+  }
+
+  /**
+   * @TODO refactor into zoom container
+   */
+  private _updateZoomX(zoomX: number) {
+    this._updateHeatmapZoom();
+    this._updateZoomContainers();
+
+    this._xZoomables?.forEach(z => {
+      const zoomable = z as HTMLElement;
+      zoomable.style.width = `${zoomX * 100}%`;
+    });
+  }
+
+  private _updateZoomY(zoomY: number) {
+    this._updateHeatmapZoom();
+    this._updateZoomContainers();
+
+    this._yZoomables?.forEach(z => {
+      const zoomable = z as HTMLElement;
+      zoomable.style.height = `${zoomY * 100}%`;
+    });
+  }
+
+  private _updateHeatmapZoom() {
+    if (this._heatmap) {
+      this._heatmap.style.transform = `scale(${this.zoomX}, ${
+        this.zoomY
+      }) translate(${50 * (1 - 1 / this.zoomX)}%, ${
+        50 * (1 - 1 / this.zoomY)
+      }%)`;
+    }
+  }
+
+  private _updateZoomContainers() {
+    this._zoomContainers?.forEach(z => {
+      // eslint-disable-next-line no-param-reassign
+      z.zoomX = this.zoomX;
+      // eslint-disable-next-line no-param-reassign
+      z.zoomY = this.zoomY;
+    });
   }
 
   private _handleWheel(event: WheelEvent) {
