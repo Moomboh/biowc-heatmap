@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.0](https://github.com/Moomboh/biowc-heatmap/compare/v0.3.0...v0.4.0) (2022-05-24)
+
+This release is centered around improving rendering performance.
+
+### ⚠ BREAKING CHANGES
+
+* Tooltip is removed for performance reasons - might be added back in later version.
+  The zoom buffering is also removed and zooming is now applied instantaniously.
+
+### Features
+
+* remove tooltip for perf reasons ([8c496b9](https://github.com/Moomboh/biowc-heatmap/commits/8c496b9a14632b35cffd86e2863e863f6c1769b1))
+* show full label as title ([4bd835f](https://github.com/Moomboh/biowc-heatmap/commits/4bd835f377e2752aafd557c082b07bcc013dd938))
+
+
+### Bug Fixes
+
+* fix dendrogram cut off at border ([c55ba92](https://github.com/Moomboh/biowc-heatmap/commits/c55ba9237ca35f238078b237428dd44e9d1cb81c))
+
 ## [0.3.0](https://github.com/Moomboh/biowc-heatmap/compare/v0.2.1...v0.3.0) (2022-05-21)
 
 
