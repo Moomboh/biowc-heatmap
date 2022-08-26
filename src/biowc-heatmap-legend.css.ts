@@ -29,7 +29,6 @@ svg {
     top: 0;
     width: 40%;
     height: 100%;
-    border: 1px solid var(--biowc-heatmap-legend-color-scale-gradient-border-color, #000);
 }
 
 .color-scale-ticks {
@@ -67,4 +66,40 @@ svg {
     width: var(--biowc-heatmap-legend-color-annot-label-color-size, 0.75em);
     height: var(--biowc-heatmap-legend-color-annot-label-color-size, 0.75em);
 }
+
+.color-scale-gradient-border {
+    fill: none;
+    stroke: var(--biowc-heatmap-legend-color-scale-gradient-border-color, #000);
+    stroke-width: 1px;
+    vector-effect: non-scaling-stroke;
+}
 `;
+
+export function svgCss(fontSize: number) {
+  return css`
+    .axis-label {
+        font: ${fontSize * 1.1}px sans-serif;
+    }
+
+    .color-annot-label {
+        font: ${fontSize}px sans-serif;
+    }
+
+    .color-scale-label {
+        font: ${fontSize}px sans-serif;
+    }
+
+    .color-scale-ticks-line {
+        stroke: black;
+        stroke-width: 1px;
+        vector-effect: non-scaling-stroke;
+    }
+
+    .color-scale-gradient-border {
+        fill: none;
+        stroke: black;
+        stroke-width: 1px;
+        vector-effect: non-scaling-stroke;
+    }
+  `;
+}

@@ -1,4 +1,4 @@
-import { html, LitElement, HTMLTemplateResult } from 'lit';
+import { html, LitElement, HTMLTemplateResult, render, svg } from 'lit';
 import { eventOptions, property, query, queryAll } from 'lit/decorators.js';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 import styles from './biowc-heatmap.css.js';
@@ -27,6 +27,23 @@ import {
   SelectEvent,
 } from './mixins/BiowcHeatmapSelectableMixin.js';
 import { ColorScaleConfig } from './util/colors.js';
+import { BiowcHeatmapLegend } from './BiowcHeatmapLegend.js';
+
+export const DEFAULT_SVG_FONT_SIZE = 16;
+export const DEFAULT_SVG_CELL_WIDTH = 16;
+export const DEFAULT_SVG_CELL_HEIGHT = 16;
+export const DEFAULT_SVG_AXIS_LABEL_HEIGHT = 2.5 * DEFAULT_SVG_FONT_SIZE;
+export const DEFAULT_SVG_COLOR_ANNOT_HEIGHT = 12;
+export const DEFAULT_SVG_LABELS_HEIGHT = 120;
+export const DEFAULT_SVG_DENDROGRAM_HEIGHT = 120;
+export const DEFAULT_SVG_LEGEND_WIDTH = 300;
+export const DEFAULT_SVG_LEGEND_HEIGHT = 800;
+export const DEFAULT_SVG_LEGEND_MARGIN = 50;
+export const DEFAULT_SVG_LEGEND_COLOR_SCALE_HEIGHT = 200;
+export const DEFAULT_SVG_LEGEND_COLOR_SCALE_GRADIENT_WIDTH = 26;
+export const DEFAULT_SVG_LEGEND_COLOR_SCALE_TICKS_WIDTH = 12;
+export const DEFAULT_SVG_LEGEND_COLOR_SCALE_TICKS_LABEL_WIDTH = 4;
+export const DEFAULT_SVG_LEGEND_COLOR_SCALE_TICKS_LABEL_MARGIN = 4;
 
 export enum Side {
   top = 'top',
@@ -59,6 +76,10 @@ export type ColorAnnotLabels = {
 
 export type SideNumbers = {
   [key in Side]: number;
+};
+
+export type SideNumbersOption = {
+  [key in Side]?: number;
 };
 
 export type SideBooleans = {
@@ -274,6 +295,466 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     `;
   }
 
+  exportSVG(options: {
+    cellWidth: number;
+    cellHeight: number;
+    axisLabelHeights: SideNumbersOption;
+    dendrogramHeights: SideNumbersOption;
+    labelsHeights: SideNumbersOption;
+    colorAnnotHeights: SideNumbersOption;
+    legendColorScaleTitle: string;
+    legendWidth: number;
+    legendHeight: number;
+    legendMargin: number;
+    legendFormatColorTick: (value: number) => string;
+    fontSize: number;
+  }) {
+    const defaults = {
+      cellWidth: DEFAULT_SVG_CELL_WIDTH,
+      cellHeight: DEFAULT_SVG_CELL_HEIGHT,
+      axisLabelHeights: {} as SideNumbersOption,
+      dendrogramHeights: {} as SideNumbersOption,
+      labelsHeights: {} as SideNumbersOption,
+      colorAnnotHeights: {} as SideNumbersOption,
+      legendColorScaleTitle: '',
+      legendWidth: DEFAULT_SVG_LEGEND_WIDTH,
+      legendHeight: DEFAULT_SVG_LEGEND_HEIGHT,
+      legendMargin: DEFAULT_SVG_LEGEND_MARGIN,
+      legendFormatColorTick: undefined,
+      fontSize: DEFAULT_SVG_FONT_SIZE,
+    };
+
+    // eslint-disable-next-line no-param-reassign
+    options = { ...defaults, ...options };
+
+    const {
+      cellWidth,
+      cellHeight,
+      axisLabelHeights,
+      dendrogramHeights,
+      labelsHeights,
+      colorAnnotHeights,
+      legendColorScaleTitle,
+      legendWidth,
+      legendHeight,
+      legendMargin,
+      legendFormatColorTick,
+      fontSize,
+    } = options;
+
+    function determineSideHeights(
+      sideHeights: SideNumbersOption,
+      hasSide: SideBooleans,
+      defaultHeight: number
+    ) {
+      return Object.fromEntries(
+        SIDES.map(side => {
+          if (sideHeights[side] !== undefined) {
+            return [side, sideHeights[side]];
+          }
+          return [side, hasSide[side] ? defaultHeight : 0];
+        })
+      ) as SideNumbers;
+    }
+
+    const dendrogramH = determineSideHeights(
+      dendrogramHeights,
+      this._hasSideDendrogram,
+      DEFAULT_SVG_DENDROGRAM_HEIGHT
+    );
+
+    const axisLabelH = determineSideHeights(
+      axisLabelHeights,
+      this._hasSideAxisLabel,
+      DEFAULT_SVG_AXIS_LABEL_HEIGHT
+    );
+
+    const labelsH = determineSideHeights(
+      labelsHeights,
+      this._hasSideLabels,
+      DEFAULT_SVG_LABELS_HEIGHT
+    );
+
+    const colorAnnotH = determineSideHeights(
+      colorAnnotHeights,
+      this._hasSideColorAnnots,
+      DEFAULT_SVG_COLOR_ANNOT_HEIGHT
+    );
+
+    const width =
+      axisLabelH.left +
+      dendrogramH.left +
+      labelsH.left +
+      colorAnnotH.left +
+      this._nCols * cellWidth +
+      colorAnnotH.right +
+      labelsH.right +
+      dendrogramH.right +
+      axisLabelH.right +
+      legendMargin +
+      legendWidth;
+
+    const height = Math.max(
+      this._nRows * cellHeight +
+        axisLabelH.top +
+        dendrogramH.top +
+        labelsH.top +
+        colorAnnotH.top +
+        colorAnnotH.bottom +
+        labelsH.bottom +
+        dendrogramH.bottom +
+        axisLabelH.bottom,
+      legendHeight +
+        axisLabelH.top +
+        dendrogramH.top +
+        labelsH.top +
+        colorAnnotH.top
+    );
+
+    const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svgEl.setAttribute('width', `${width}`);
+    svgEl.setAttribute('height', `${height}`);
+    svgEl.setAttribute('height', `${height}`);
+
+    // TOP
+    const topXOfsset =
+      axisLabelH.left + dendrogramH.left + labelsH.left + colorAnnotH.left;
+
+    const topAxisLabelSVG = this._getAxisLabelSVG(
+      Side.top,
+      axisLabelH.top,
+      cellWidth,
+      cellHeight,
+      1.5 * fontSize
+    );
+
+    if (topAxisLabelSVG && axisLabelH[Side.top]) {
+      topAxisLabelSVG.setAttribute('x', `${topXOfsset}`);
+      topAxisLabelSVG.setAttribute('y', '0');
+      svgEl.append(topAxisLabelSVG);
+    }
+
+    const topDendrogramSVG = (
+      this._topContainer?.querySelector('biowc-heatmap-dendrogram') as
+        | BiowcHeatmapDendrogram
+        | null
+        | undefined
+    )?.exportSVG(dendrogramH.top, cellWidth, cellHeight);
+
+    if (topDendrogramSVG && dendrogramH[Side.top]) {
+      topDendrogramSVG.setAttribute('x', `${topXOfsset}`);
+      topDendrogramSVG.setAttribute('y', `${axisLabelH.top}`);
+      svgEl.append(topDendrogramSVG);
+    }
+
+    const topLabelsSVG = (
+      this._topContainer?.querySelector('biowc-heatmap-labels') as
+        | BiowcHeatmapLabels
+        | null
+        | undefined
+    )?.exportSVG(labelsH.top, cellWidth, cellHeight, fontSize);
+
+    if (topLabelsSVG && labelsH[Side.top]) {
+      topLabelsSVG.setAttribute('x', `${topXOfsset}`);
+      topLabelsSVG.setAttribute('y', `${axisLabelH.top + dendrogramH.top}`);
+      svgEl.append(topLabelsSVG);
+    }
+
+    const topColorAnnotSVG = (
+      this._topContainer?.querySelector('biowc-heatmap-color-annot') as
+        | BiowcHeatmapColorAnnot
+        | null
+        | undefined
+    )?.exportSVG(colorAnnotH.top, cellWidth, cellHeight);
+
+    if (topColorAnnotSVG && colorAnnotH[Side.top]) {
+      topColorAnnotSVG.setAttribute('x', `${topXOfsset}`);
+      topColorAnnotSVG.setAttribute(
+        'y',
+        `${axisLabelH.top + dendrogramH.top + labelsH.top}`
+      );
+      svgEl.append(topColorAnnotSVG);
+    }
+
+    // LEFT
+    const leftYOffset =
+      axisLabelH.top + dendrogramH.top + labelsH.top + colorAnnotH.top;
+
+    const leftAxisLabelSVG = this._getAxisLabelSVG(
+      Side.left,
+      axisLabelH.left,
+      cellWidth,
+      cellHeight,
+      1.5 * fontSize
+    );
+
+    if (leftAxisLabelSVG && axisLabelH[Side.left]) {
+      leftAxisLabelSVG.setAttribute('x', '0');
+      leftAxisLabelSVG.setAttribute('y', `${leftYOffset}`);
+      svgEl.append(leftAxisLabelSVG);
+    }
+
+    const leftDendrogramSVG = (
+      this._leftContainer?.querySelector('biowc-heatmap-dendrogram') as
+        | BiowcHeatmapDendrogram
+        | null
+        | undefined
+    )?.exportSVG(dendrogramH.left, cellWidth, cellHeight);
+
+    if (leftDendrogramSVG && dendrogramH[Side.left]) {
+      leftDendrogramSVG.setAttribute('x', `${axisLabelH.left}`);
+      leftDendrogramSVG.setAttribute('y', `${leftYOffset}`);
+      svgEl.append(leftDendrogramSVG);
+    }
+
+    const leftLabelsSVG = (
+      this._leftContainer?.querySelector('biowc-heatmap-labels') as
+        | BiowcHeatmapLabels
+        | null
+        | undefined
+    )?.exportSVG(labelsH.left, cellWidth, cellHeight, fontSize);
+
+    if (leftLabelsSVG && labelsH[Side.left]) {
+      leftLabelsSVG.setAttribute('x', `${axisLabelH.left + dendrogramH.left}`);
+      leftLabelsSVG.setAttribute('y', `${leftYOffset}`);
+      svgEl.append(leftLabelsSVG);
+    }
+    const leftColorAnnotSVG = (
+      this._leftContainer?.querySelector('biowc-heatmap-color-annot') as
+        | BiowcHeatmapColorAnnot
+        | null
+        | undefined
+    )?.exportSVG(colorAnnotH.left, cellWidth, cellHeight);
+
+    if (leftColorAnnotSVG && colorAnnotH[Side.left]) {
+      leftColorAnnotSVG.setAttribute(
+        'x',
+        `${axisLabelH.left + dendrogramH.left + labelsH.left}`
+      );
+      leftColorAnnotSVG.setAttribute('y', `${leftYOffset}`);
+      svgEl.append(leftColorAnnotSVG);
+    }
+
+    // HEATMAP
+    const heatmapSVG = (
+      this._heatmap as BiowcHeatmapHeatmap | undefined
+    )?.exportSVG(cellWidth, cellHeight);
+
+    if (heatmapSVG) {
+      heatmapSVG.setAttribute('x', `${topXOfsset}`);
+      heatmapSVG.setAttribute('y', `${leftYOffset}`);
+      svgEl.append(heatmapSVG);
+    }
+
+    // RIGHT
+    const rightYOffset = leftYOffset;
+    const rightXOffset = topXOfsset + cellWidth * this._nCols;
+
+    const rightColorAnnotSVG = (
+      this._rightContainer?.querySelector('biowc-heatmap-color-annot') as
+        | BiowcHeatmapColorAnnot
+        | null
+        | undefined
+    )?.exportSVG(colorAnnotH.right, cellWidth, cellHeight);
+
+    if (rightColorAnnotSVG && colorAnnotH[Side.right]) {
+      rightColorAnnotSVG.setAttribute('x', `${rightXOffset}`);
+      rightColorAnnotSVG.setAttribute('y', `${rightYOffset}`);
+      svgEl.append(rightColorAnnotSVG);
+    }
+
+    const rightLabelsSVG = (
+      this._rightContainer?.querySelector('biowc-heatmap-labels') as
+        | BiowcHeatmapLabels
+        | null
+        | undefined
+    )?.exportSVG(labelsH.right, cellWidth, cellHeight, fontSize);
+
+    if (rightLabelsSVG && labelsH[Side.right]) {
+      rightLabelsSVG.setAttribute('x', `${rightXOffset + colorAnnotH.right}`);
+      rightLabelsSVG.setAttribute('y', `${rightYOffset}`);
+      svgEl.append(rightLabelsSVG);
+    }
+
+    const rightDendrogramSVG = (
+      this._rightContainer?.querySelector('biowc-heatmap-dendrogram') as
+        | BiowcHeatmapDendrogram
+        | null
+        | undefined
+    )?.exportSVG(dendrogramH.right, cellWidth, cellHeight);
+
+    if (rightDendrogramSVG && dendrogramH[Side.right]) {
+      rightDendrogramSVG.setAttribute(
+        'x',
+        `${rightXOffset + colorAnnotH.right + labelsH.right}`
+      );
+      rightDendrogramSVG.setAttribute('y', `${rightYOffset}`);
+      svgEl.append(rightDendrogramSVG);
+    }
+
+    const rightAxisLabelSVG = this._getAxisLabelSVG(
+      Side.right,
+      axisLabelH.right,
+      cellWidth,
+      cellHeight,
+      1.5 * fontSize
+    );
+
+    if (rightAxisLabelSVG && axisLabelH[Side.right]) {
+      rightAxisLabelSVG.setAttribute(
+        'x',
+        `${
+          rightXOffset + colorAnnotH.right + labelsH.right + dendrogramH.right
+        }`
+      );
+      rightAxisLabelSVG.setAttribute('y', `${rightYOffset}`);
+      svgEl.append(rightAxisLabelSVG);
+    }
+
+    // BOTTOM
+    const bottomXOffset = topXOfsset;
+    const bottomYOffset = leftYOffset + cellHeight * this._nRows;
+
+    const bottomColorAnnotSVG = (
+      this._bottomContainer?.querySelector('biowc-heatmap-color-annot') as
+        | BiowcHeatmapColorAnnot
+        | null
+        | undefined
+    )?.exportSVG(colorAnnotH.bottom, cellWidth, cellHeight);
+
+    if (bottomColorAnnotSVG && colorAnnotH[Side.bottom]) {
+      bottomColorAnnotSVG.setAttribute('x', `${bottomXOffset}`);
+      bottomColorAnnotSVG.setAttribute('y', `${bottomYOffset}`);
+      svgEl.append(bottomColorAnnotSVG);
+    }
+
+    const bottomLabelsSVG = (
+      this._bottomContainer?.querySelector('biowc-heatmap-labels') as
+        | BiowcHeatmapLabels
+        | null
+        | undefined
+    )?.exportSVG(labelsH.bottom, cellWidth, cellHeight, fontSize);
+
+    if (bottomLabelsSVG && labelsH[Side.bottom]) {
+      bottomLabelsSVG.setAttribute('x', `${bottomXOffset}`);
+      bottomLabelsSVG.setAttribute(
+        'y',
+        `${bottomYOffset + colorAnnotH.bottom}`
+      );
+      svgEl.append(bottomLabelsSVG);
+    }
+
+    const bottomDendrogramSVG = (
+      this._bottomContainer?.querySelector('biowc-heatmap-dendrogram') as
+        | BiowcHeatmapDendrogram
+        | null
+        | undefined
+    )?.exportSVG(dendrogramH.bottom, cellWidth, cellHeight);
+
+    if (bottomDendrogramSVG && dendrogramH[Side.bottom]) {
+      bottomDendrogramSVG.setAttribute('x', `${bottomXOffset}`);
+      bottomDendrogramSVG.setAttribute(
+        'y',
+        `${bottomYOffset + colorAnnotH.bottom + labelsH.bottom}`
+      );
+      svgEl.append(bottomDendrogramSVG);
+    }
+
+    const bottomAxisLabelSVG = this._getAxisLabelSVG(
+      Side.bottom,
+      axisLabelH.bottom,
+      cellWidth,
+      cellHeight,
+      1.5 * fontSize
+    );
+
+    if (bottomAxisLabelSVG && axisLabelH[Side.bottom]) {
+      bottomAxisLabelSVG.setAttribute('x', `${bottomXOffset}`);
+      bottomAxisLabelSVG.setAttribute(
+        'y',
+        `${
+          bottomYOffset +
+          colorAnnotH.bottom +
+          labelsH.bottom +
+          dendrogramH.bottom
+        }`
+      );
+      svgEl.append(bottomAxisLabelSVG);
+    }
+
+    // LEGEND
+    const legendXOffset = width - legendWidth;
+    const legendYOffset = rightYOffset;
+
+    const legend = new BiowcHeatmapLegend();
+    legend.forHeatmap = this;
+    legend.colorScaleTitle = legendColorScaleTitle;
+
+    if (legendFormatColorTick) {
+      legend.formatColorTick = legendFormatColorTick;
+    }
+
+    const legendSVG = legend.exportSVG(
+      legendWidth,
+      legendHeight,
+      undefined,
+      undefined,
+      fontSize
+    );
+
+    if (legendSVG && legendHeight && legendWidth) {
+      legendSVG.setAttribute('x', `${legendXOffset}`);
+      legendSVG.setAttribute('y', `${legendYOffset}`);
+      svgEl.append(legendSVG);
+    }
+
+    return svgEl;
+  }
+
+  private _getAxisLabelSVG(
+    side: Side,
+    height = DEFAULT_SVG_AXIS_LABEL_HEIGHT,
+    cellWidth = DEFAULT_SVG_CELL_WIDTH,
+    cellHeight = DEFAULT_SVG_CELL_HEIGHT,
+    fontSize = 1.5 * DEFAULT_SVG_FONT_SIZE
+  ) {
+    if (!this.axisLabels[side]) {
+      return null;
+    }
+
+    const tempContainerEl = document.createElement('div');
+    const isHorizontal = side === 'top' || side === 'bottom';
+    const svgWidth = isHorizontal ? this._nCols * cellWidth : height;
+    const svgHeight = isHorizontal ? height : this._nRows * cellHeight;
+
+    render(
+      svg`
+        <svg width="${svgWidth}" height="${svgHeight}">
+          <text
+            x="50%"
+            y="50%"
+            style="font: ${fontSize}px sans-serif;"
+            text-anchor="middle"
+            dominant-baseline="middle"
+            transform="${
+              isHorizontal
+                ? ''
+                : `rotate(-90) translate(-${svgHeight / 2}, -${
+                    svgHeight / 2 - svgWidth / 2
+                  })`
+            }"
+          >
+            ${this.axisLabels[side]}
+          </text>
+        </svg>
+    `,
+      tempContainerEl
+    );
+
+    return tempContainerEl.firstElementChild as SVGSVGElement;
+  }
+
   private _renderHeatmap(): HTMLTemplateResult {
     return html`
       <div 
@@ -374,34 +855,60 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   private get _hasSideLabels() {
     return Object.fromEntries(
       Object.values(Side).map(side => [side, !!this.labels[side]])
-    );
+    ) as SideBooleans;
   }
 
   @computed('dendrograms')
   private get _hasSideDendrogram() {
     return Object.fromEntries(
       Object.values(Side).map(side => [side, !!this.dendrograms[side]])
-    );
+    ) as SideBooleans;
   }
 
   @computed('colorAnnots')
   private get _hasSideColorAnnots() {
     return Object.fromEntries(
       Object.values(Side).map(side => [side, !!this.colorAnnots[side]])
-    );
+    ) as SideBooleans;
+  }
+
+  @computed('axisLabels')
+  private get _hasSideAxisLabel() {
+    return Object.fromEntries(
+      Object.values(Side).map(side => [side, !!this.axisLabels[side]])
+    ) as SideBooleans;
   }
 
   // TODO: Check if axis labels are shown and refactor to deduplicate above code
-  @computed('_hasSideLabels', '_hasSideDendrogram', '_hasSideColorAnnots')
+  @computed(
+    '_hasSideLabels',
+    '_hasSideDendrogram',
+    '_hasSideColorAnnots',
+    '_hasSideAxisLabels'
+  )
   private get _hasSide() {
     return Object.fromEntries(
       Object.values(Side).map(side => [
         side,
         this._hasSideLabels[side] ||
           this._hasSideDendrogram[side] ||
-          this._hasSideColorAnnots[side],
+          this._hasSideColorAnnots[side] ||
+          this._hasSideAxisLabel[side],
       ])
-    );
+    ) as SideBooleans;
+  }
+
+  @computed('data')
+  private get _nRows(): number {
+    return this.data.length;
+  }
+
+  @computed('_nRows', 'data')
+  private get _nCols(): number {
+    if (this._nRows === 0) {
+      return 0;
+    }
+    return this.data[0].length;
   }
 
   private _updateSelectedRows(selectedRows: Set<number>) {

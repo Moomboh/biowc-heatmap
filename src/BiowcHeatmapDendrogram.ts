@@ -1,9 +1,14 @@
 import { LitElement, svg, SVGTemplateResult } from 'lit';
 import { property } from 'lit/decorators.js';
-import styles from './biowc-heatmap-dendrogram.css.js';
+import styles, { svgCss } from './biowc-heatmap-dendrogram.css.js';
 import range from './util/range.js';
 import { computed } from './util/computedDecorator.js';
-import { Side } from './BiowcHeatmap.js';
+import {
+  DEFAULT_SVG_CELL_HEIGHT,
+  DEFAULT_SVG_CELL_WIDTH,
+  DEFAULT_SVG_DENDROGRAM_HEIGHT,
+  Side,
+} from './BiowcHeatmap.js';
 import BiowcHeatmapSelectableMixin from './mixins/BiowcHeatmapSelectableMixin.js';
 import BiowcHeatmapHoverableMixin from './mixins/BiowcHeatmapHoverableMixin.js';
 
@@ -237,6 +242,33 @@ export class BiowcHeatmapDendrogram extends BiowcHeatmapSelectableMixin(
     `;
   }
 
+  exportSVG(
+    height = DEFAULT_SVG_DENDROGRAM_HEIGHT,
+    cellWidth = DEFAULT_SVG_CELL_WIDTH,
+    cellHeight = DEFAULT_SVG_CELL_HEIGHT
+  ) {
+    const svgEl = (this.shadowRoot?.querySelector('svg')?.cloneNode(true) ??
+      null) as SVGElement | null;
+
+    if (svgEl === null) {
+      return null;
+    }
+
+    const style = document.createElement('style');
+    style.textContent = svgCss.toString();
+    svgEl.append(style);
+
+    if (this._horizontal) {
+      svgEl.setAttribute('width', `${cellWidth * this._dataLength}`);
+      svgEl.setAttribute('height', `${height}`);
+    } else {
+      svgEl.setAttribute('width', `${height}`);
+      svgEl.setAttribute('height', `${cellHeight * this._dataLength}`);
+    }
+
+    return svgEl;
+  }
+
   private _renderPath(
     path: DendrogramPath,
     pathIndex: number
@@ -278,12 +310,12 @@ export class BiowcHeatmapDendrogram extends BiowcHeatmapSelectableMixin(
   private _renderSelected(index: number): SVGTemplateResult {
     const from = this._transformCoords({
       x: index - this.selectionMarkerWidth / 2,
-      y: -this.yShift,
+      y: 0.01 * this._viewboxHeight - this.yShift,
     });
 
     const to = this._transformCoords({
       x: index + this.selectionMarkerWidth / 2,
-      y: -this.yShift,
+      y: 0.01 * this._viewboxHeight - this.yShift,
     });
 
     return svg`
@@ -392,6 +424,11 @@ export class BiowcHeatmapDendrogram extends BiowcHeatmapSelectableMixin(
       x: point.x + this.xShift,
       y: point.y + this.yShift,
     });
+  }
+
+  @computed('_dendrogramList')
+  private get _dataLength() {
+    return this._dendrogramList.length + 1;
   }
 
   @computed('_dendrogramList', 'yShift', 'xShift')

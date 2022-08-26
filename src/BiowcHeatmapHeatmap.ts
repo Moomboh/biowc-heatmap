@@ -3,6 +3,10 @@ import { property } from 'lit/decorators.js';
 import { colorScale, ColorScaleConfig } from './util/colors.js';
 import styles from './biowc-heatmap-heatmap.css.js';
 import { computed } from './util/computedDecorator.js';
+import {
+  DEFAULT_SVG_CELL_HEIGHT,
+  DEFAULT_SVG_CELL_WIDTH,
+} from './BiowcHeatmap.js';
 
 export type CellHoverEvent = CustomEvent<{
   x: number | null;
@@ -49,6 +53,23 @@ export class BiowcHeatmapHeatmap extends LitElement {
         ${this._renderOverlays()}
       </svg>
     `;
+  }
+
+  exportSVG(
+    cellWidth = DEFAULT_SVG_CELL_WIDTH,
+    cellHeight = DEFAULT_SVG_CELL_HEIGHT
+  ) {
+    const svgEl = (this.shadowRoot?.querySelector('svg')?.cloneNode(true) ??
+      null) as SVGElement | null;
+
+    if (svgEl === null) {
+      return null;
+    }
+
+    svgEl.setAttribute('width', `${this._nCols * cellWidth}`);
+    svgEl.setAttribute('height', `${this._nRows * cellHeight}`);
+
+    return svgEl;
   }
 
   private _renderCells(): SVGTemplateResult[] {
@@ -120,7 +141,7 @@ export class BiowcHeatmapHeatmap extends LitElement {
     return this.data.length;
   }
 
-  @computed('_nRows', '_nCols')
+  @computed('_nRows', 'data')
   private get _nCols(): number {
     if (this._nRows === 0) {
       return 0;

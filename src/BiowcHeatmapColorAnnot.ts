@@ -1,7 +1,12 @@
 import { svg, LitElement, SVGTemplateResult } from 'lit';
 import { property } from 'lit/decorators.js';
 import styles from './biowc-heatmap-color-annots.css.js';
-import { Side } from './BiowcHeatmap.js';
+import {
+  DEFAULT_SVG_CELL_HEIGHT,
+  DEFAULT_SVG_CELL_WIDTH,
+  DEFAULT_SVG_COLOR_ANNOT_HEIGHT,
+  Side,
+} from './BiowcHeatmap.js';
 import BiowcHeatmapHoverableMixin from './mixins/BiowcHeatmapHoverableMixin.js';
 import BiowcHeatmapSelectableMixin from './mixins/BiowcHeatmapSelectableMixin.js';
 import { computed } from './util/computedDecorator.js';
@@ -61,6 +66,29 @@ export class BiowcHeatmapColorAnnot extends BiowcHeatmapSelectableMixin(
         )}
       </svg>
     `;
+  }
+
+  exportSVG(
+    height = DEFAULT_SVG_COLOR_ANNOT_HEIGHT,
+    cellWidth = DEFAULT_SVG_CELL_WIDTH,
+    cellHeight = DEFAULT_SVG_CELL_HEIGHT
+  ) {
+    const svgEl = (this.shadowRoot?.querySelector('svg')?.cloneNode(true) ??
+      null) as SVGElement | null;
+
+    if (svgEl === null) {
+      return null;
+    }
+
+    if (this._horizontal) {
+      svgEl.setAttribute('width', `${this._annotLength * cellWidth}`);
+      svgEl.setAttribute('height', `${height}`);
+    } else {
+      svgEl.setAttribute('width', `${height}`);
+      svgEl.setAttribute('height', `${this._annotLength * cellHeight}`);
+    }
+
+    return svgEl;
   }
 
   @computed('annotColors')
