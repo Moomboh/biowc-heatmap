@@ -173,6 +173,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   @property({ attribute: false })
   colorAnnotLabels: ColorAnnotLabels = {};
 
+  @property({ type: Number, attribute: 'dendrogram-min-height-fraction' })
+  dendrogramMinHeightFraction = 0.0;
+
   get zoomX() {
     return this._zoomX;
   }
@@ -808,6 +811,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                 <biowc-heatmap-dendrogram
                   .dendrogram=${this.dendrograms[side]!}
                   .side=${side}
+                  min-height-fraction=${this.dendrogramMinHeightFraction}
                   @biowc-heatmap-side-select=
                     ${this._handleSelect(horizontal)}
                   @biowc-heatmap-side-hover=

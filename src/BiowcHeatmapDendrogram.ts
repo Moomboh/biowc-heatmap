@@ -205,8 +205,8 @@ export class BiowcHeatmapDendrogram extends BiowcHeatmapSelectableMixin(
   @property({ type: Number })
   xShift = 0.5;
 
-  @property({ type: Number })
-  yShift = 0.0;
+  @property({ type: Number, attribute: 'min-height-fraction' })
+  minHeightFraction = 0.0;
 
   @property({ type: Number })
   selectionMarkerWidth = 0.8;
@@ -221,16 +221,10 @@ export class BiowcHeatmapDendrogram extends BiowcHeatmapSelectableMixin(
         width="100%"
         height="100%"
         viewBox="
-         ${this.side === Side.left ? -this._viewboxWidth * 0.02 : 0}
-         ${this.side === Side.top ? -this._viewboxHeight * 0.02 : 0}
-         ${
-           this._viewboxWidth +
-           (this.side === Side.right ? this._viewboxWidth * 0.02 : 0)
-         }
-         ${
-           this._viewboxHeight +
-           (this.side === Side.bottom ? this._viewboxHeight * 0.02 : 0)
-         }
+          0
+          0
+         ${this._viewboxWidth}
+         ${this._viewboxHeight}
         "
         preserveAspectRatio="none"
       >
@@ -310,12 +304,12 @@ export class BiowcHeatmapDendrogram extends BiowcHeatmapSelectableMixin(
   private _renderSelected(index: number): SVGTemplateResult {
     const from = this._transformCoords({
       x: index - this.selectionMarkerWidth / 2,
-      y: 0.01 * this._viewboxHeight - this.yShift,
+      y: 0,
     });
 
     const to = this._transformCoords({
       x: index + this.selectionMarkerWidth / 2,
-      y: 0.01 * this._viewboxHeight - this.yShift,
+      y: 0,
     });
 
     return svg`
@@ -377,14 +371,19 @@ export class BiowcHeatmapDendrogram extends BiowcHeatmapSelectableMixin(
     return calcDendrogragramListMaxHeight(this._dendrogramList);
   }
 
+  @computed('_dendrogramHeight')
+  private get _minHeight(): number {
+    return this._dendrogramHeight * this.minHeightFraction;
+  }
+
   @computed('_dendrogramWidth', 'xShift')
   private get _drawWidth(): number {
     return this._dendrogramWidth + 2 * this.xShift;
   }
 
-  @computed('_dendrogramHeight', 'yShift')
+  @computed('_dendrogramHeight')
   private get _drawHeight(): number {
-    return this._dendrogramHeight + 2 * this.yShift;
+    return this._dendrogramHeight * (1 + this.minHeightFraction + 0.01);
   }
 
   @computed('_horizontal', '_drawWidth', '_drawHeight')
@@ -397,32 +396,32 @@ export class BiowcHeatmapDendrogram extends BiowcHeatmapSelectableMixin(
     return this._horizontal ? this._drawHeight : this._drawWidth;
   }
 
-  @computed('side', 'xShift', 'yShift', '_viewboxWidth', '_viewboxHeight')
+  @computed('side', 'xShift', '_viewboxWidth', '_viewboxHeight')
   private get _transformCoords(): (point: Point) => Point {
     if (this.side === Side.top) {
       return (point: Point): Point => ({
         x: point.x + this.xShift,
-        y: this._viewboxHeight - point.y - this.yShift,
+        y: this._viewboxHeight - point.y,
       });
     }
 
     if (this.side === Side.left) {
       return (point: Point): Point => ({
-        x: this._viewboxWidth - point.y - this.yShift,
+        x: this._viewboxWidth - point.y,
         y: point.x + this.xShift,
       });
     }
 
     if (this.side === Side.right) {
       return (point: Point): Point => ({
-        x: point.y + this.yShift,
+        x: point.y,
         y: point.x + this.xShift,
       });
     }
 
     return (point: Point): Point => ({
       x: point.x + this.xShift,
-      y: point.y + this.yShift,
+      y: point.y,
     });
   }
 
@@ -431,7 +430,7 @@ export class BiowcHeatmapDendrogram extends BiowcHeatmapSelectableMixin(
     return this._dendrogramList.length + 1;
   }
 
-  @computed('_dendrogramList', 'yShift', 'xShift')
+  @computed('_dendrogramList', 'xShift')
   private get _dendrogramPaths(): DendrogramPath[] {
     const list = this._dendrogramList;
     const paths: DendrogramPath[] = [];
@@ -446,14 +445,18 @@ export class BiowcHeatmapDendrogram extends BiowcHeatmapSelectableMixin(
       const leftPos = isLeftDendrogram ? list[left].center! : left;
       const rightPos = isRightDendrogram ? list[right].center! : right;
 
-      const leftHeight = isLeftDendrogram ? list[left].height : -this.yShift;
-      const rightHeight = isRightDendrogram ? list[right].height : -this.yShift;
+      const leftHeight = isLeftDendrogram
+        ? list[left].height + this._minHeight
+        : 0;
+      const rightHeight = isRightDendrogram
+        ? list[right].height + this._minHeight
+        : 0;
 
       paths.push({
         bottomLeft: { x: leftPos, y: leftHeight },
         bottomRight: { x: rightPos, y: rightHeight },
-        topLeft: { x: leftPos, y: height },
-        topRight: { x: rightPos, y: height },
+        topLeft: { x: leftPos, y: height + this._minHeight },
+        topRight: { x: rightPos, y: height + this._minHeight },
         leftBoundary,
         rightBoundary,
         isLeftDendrogram,

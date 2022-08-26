@@ -38,6 +38,7 @@ function renderHeatmap(demoData: DemoData) {
           top: demoData.xAnnotColorLabels,
         }}
         .axisLabels=${demoData.axisLabels}
+        dendrogram-min-height-fraction="0.02"
     ></biowc-heatmap>
     <biowc-heatmap-legend
       id="prdb-legend"
