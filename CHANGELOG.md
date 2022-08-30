@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/Moomboh/biowc-heatmap/compare/v0.4.0...v0.5.0) (2022-08-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove yShift property
+
+### Features
+
+* add min-height-fraction prop for dendrogra ([9de5df3](https://github.com/Moomboh/biowc-heatmap/commits/9de5df3f4801c6c30b7bb97020c0fb5b0bf19e19))
+* add SVG export ([b4eab9d](https://github.com/Moomboh/biowc-heatmap/commits/b4eab9d8a55b3de91b6454300ff8bb06969faaa4))
+* zoom into cursor position ([c046e01](https://github.com/Moomboh/biowc-heatmap/commits/c046e012e1aa250d91b4dbb9ec8fe7a033ce6da7))
+
 ## [0.4.0](https://github.com/Moomboh/biowc-heatmap/compare/v0.3.0...v0.4.0) (2022-05-24)
 
 This release is centered around improving rendering performance.
