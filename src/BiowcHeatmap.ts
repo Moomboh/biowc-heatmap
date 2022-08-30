@@ -181,6 +181,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   }
 
   set zoomX(zoomX: number) {
+    this._lastZoomX = this._zoomX;
     this._zoomX = zoomX;
     this._updateZoomX(zoomX);
   }
@@ -190,6 +191,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   }
 
   set zoomY(zoomY: number) {
+    this._lastZoomY = this._zoomY;
     this._zoomY = zoomY;
     this._updateZoomY(zoomY);
   }
@@ -232,11 +234,19 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
   private _zoomX = 1;
 
+  private _lastZoomX = 1;
+
   private _zoomY = 1;
+
+  private _lastZoomY = 1;
 
   private _hoveredRows: Set<number> = new Set();
 
   private _hoveredCols: Set<number> = new Set();
+
+  private _zoomYCenter = 0;
+
+  private _zoomXCenter = 0;
 
   private _selectedRows: Set<number> = new Set();
 
@@ -768,6 +778,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
           .data=${this.data}
           .cellColorScale=${this.cellColorScale}
           @biowc-heatmap-cell-hover=${this._handleCellHover}
+          @mousemove=${this._handleHeatmapMouseMove}
           class="heatmap"
         ></biowc-heatmap-heatmap>
       </div>
@@ -816,6 +827,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                     ${this._handleSelect(horizontal)}
                   @biowc-heatmap-side-hover=
                     ${this._handleHover(horizontal)}
+                  @mousemove=${this._handleSideMouseMove(horizontal)}
                   class="dendrogram ${selectableClass} ${hoverableClass} ${zoomableClass}"
                 ></biowc-heatmap-dendrogram>`
                 : html``
@@ -829,6 +841,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                   ?horizontal=${horizontal}
                   @biowc-heatmap-side-hover=${this._handleHover(horizontal)}
                   @biowc-heatmap-side-select=${this._handleSelect(horizontal)}
+                  @mousemove=${this._handleSideMouseMove(horizontal)}
                   textalign=${textAlign}
                   class="labels ${selectableClass} ${hoverableClass} ${zoomableClass}"
                 ></biowc-heatmap-labels>`
@@ -843,6 +856,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                   .side=${side}
                   @biowc-heatmap-side-hover=${this._handleHover(horizontal)}
                   @biowc-heatmap-side-select=${this._handleSelect(horizontal)}
+                  @mousemove=${this._handleSideMouseMove(horizontal)}
                   class="color-annot ${selectableClass} ${hoverableClass} ${zoomableClass}"
                 ></biowc-heatmap-color-annot>`
                 : html``
@@ -954,6 +968,14 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
       const zoomable = z as HTMLElement;
       zoomable.style.width = `${zoomX * 100}%`;
     });
+
+    const zoomChange = zoomX / this._lastZoomX;
+    const scrollLeft = this._heatmapContainer?.scrollLeft ?? 0;
+
+    const left =
+      zoomChange * (scrollLeft + this._zoomXCenter) - this._zoomXCenter;
+
+    this._heatmapContainer?.scrollTo({ left });
   }
 
   private _updateZoomY(zoomY: number) {
@@ -964,6 +986,14 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
       const zoomable = z as HTMLElement;
       zoomable.style.height = `${zoomY * 100}%`;
     });
+
+    const zoomChange = zoomY / this._lastZoomY;
+    const scrollTop = this._heatmapContainer?.scrollTop ?? 0;
+
+    const top =
+      zoomChange * (scrollTop + this._zoomYCenter) - this._zoomYCenter;
+
+    this._heatmapContainer?.scrollTo({ top });
   }
 
   private _updateHeatmapZoom() {
@@ -1081,5 +1111,44 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     );
 
     this.dispatchEvent(selectEvent);
+  }
+
+  private _handleSideMouseMove =
+    (horizontal: boolean) => (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      if (horizontal) {
+        this._zoomXCenter = event.pageX - target.offsetLeft;
+        let offsetParent = target.offsetParent as HTMLElement | null;
+
+        while (offsetParent) {
+          this._zoomXCenter -= offsetParent.offsetLeft;
+          offsetParent = offsetParent.offsetParent as HTMLElement | null;
+        }
+      } else {
+        this._zoomYCenter = event.pageY - target.offsetTop;
+        let offsetParent = target.offsetParent as HTMLElement | null;
+
+        while (offsetParent) {
+          this._zoomYCenter -= offsetParent.offsetTop;
+          offsetParent = offsetParent.offsetParent as HTMLElement | null;
+        }
+      }
+    };
+
+  private _handleHeatmapMouseMove(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+
+    this._zoomXCenter = event.pageX - target.offsetLeft;
+    this._zoomYCenter = event.pageY - target.offsetTop;
+
+    let offsetParent = target.offsetParent as HTMLElement | null;
+
+    while (offsetParent) {
+      this._zoomXCenter -= offsetParent.offsetLeft;
+      this._zoomYCenter -= offsetParent.offsetTop;
+
+      offsetParent = offsetParent.offsetParent as HTMLElement | null;
+    }
   }
 }
