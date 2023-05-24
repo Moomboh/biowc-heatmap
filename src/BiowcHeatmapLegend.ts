@@ -39,7 +39,7 @@ export class BiowcHeatmapLegend extends LitElement {
   // eslint-disable-next-line class-methods-use-this
   @property({ attribute: false })
   formatColorTick: (value: number) => string = value =>
-    `${Math.round(value * 100) / 100}`;
+    (Math.round(value * 100) / 100).toFixed(2);
 
   render(): HTMLTemplateResult {
     if (!this.forHeatmap) {

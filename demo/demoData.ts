@@ -6,7 +6,7 @@ import {
 } from '../src/BiowcHeatmapDendrogram.js';
 
 export interface DemoData {
-  data: number[][];
+  data: (number | null)[][];
   xLabels: string[];
   yLabels: string[];
   xDendrogram: DendrogramNode | DendrogramList;
@@ -15,6 +15,8 @@ export interface DemoData {
   yAnnotColors?: string[];
   xAnnotColorLabels?: ColorLabels;
   axisLabels: AxisLabels;
+  minValue: number;
+  maxValue: number;
 }
 
 type ClusterDataEntry = [
@@ -74,12 +76,12 @@ function getDendrogramList(
   }));
 }
 
-function getData(prdbData: any): number[][] {
-  const data: number[][] = Array(prdbData.clusterdata.proteinorder.length);
+function getData(prdbData: any): { values: (number | null)[][], maxValue: number } {
+  const values: (number | null)[][] = Array(prdbData.clusterdata.proteinorder.length);
   let maxValue = -Infinity;
 
   for (const [i, proteinId] of prdbData.clusterdata.proteinorder.entries()) {
-    const row: number[] = Array(prdbData.clusterdata.tissueorder.length);
+    const row: (number | null)[] = Array(prdbData.clusterdata.tissueorder.length);
 
     for (const [j, tissueId] of prdbData.clusterdata.tissueorder.entries()) {
       const filteredData = prdbData.mapdata.filter(
@@ -87,21 +89,30 @@ function getData(prdbData: any): number[][] {
       );
 
       if (filteredData.length === 0) {
-        row[j] = 0;
+        if (Math.random() > 0.5) {
+          row[j] = null;
+        } else {
+          row[j] = 0
+        }
+
       } else {
         // eslint-disable-next-line prefer-destructuring
         row[j] = filteredData[0][3];
       }
 
-      if (row[j] > maxValue) {
-        maxValue = row[j];
+      const val = row[j];
+      if (val != null && val > maxValue) {
+        maxValue = val;
       }
     }
 
-    data[i] = row;
+    values[i] = row;
   }
 
-  return data.map(row => row.map(value => value / maxValue));
+  return {
+    values,
+    maxValue
+  }
 }
 
 function getXAnnotColors(tissuedata: any) {
@@ -135,7 +146,9 @@ export async function fetchDemoData(url: string): Promise<DemoData> {
   );
 
   return {
-    data,
+    data: data.values,
+    minValue: 0,
+    maxValue: data.maxValue,
     xLabels,
     yLabels,
     xDendrogram,

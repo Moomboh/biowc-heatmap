@@ -24,7 +24,7 @@ export class BiowcHeatmapHeatmap extends LitElement {
   static styles = styles;
 
   @property({ attribute: false })
-  data: number[][] = [];
+  data: (number | null)[][] = [];
 
   @property({ attribute: false })
   cellColorScale: ColorScaleConfig = defaultCellColorScale;
@@ -97,7 +97,11 @@ export class BiowcHeatmapHeatmap extends LitElement {
     ];
   }
 
-  private _renderCell(x: number, y: number, value: number): SVGTemplateResult {
+  private _renderCell(x: number, y: number, value: number | null): SVGTemplateResult {
+    if (value == null) {
+      return svg``;
+    }
+
     return svg`
       <rect
         @mouseover=${this._handleHoverCell}
