@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.2](https://github.com/Moomboh/biowc-heatmap/compare/v0.5.1...v0.5.2) (2023-06-26)
+
+
+### Features
+
+* add property naColor ([14ecde1](https://github.com/Moomboh/biowc-heatmap/commits/14ecde1f7b23561be740f096909bce4f65d42dba))
+
 ### [0.5.1](https://github.com/Moomboh/biowc-heatmap/compare/v0.5.0...v0.5.1) (2023-06-26)
 
 
