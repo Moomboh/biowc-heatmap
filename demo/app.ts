@@ -24,25 +24,26 @@ function renderHeatmap(demoData: DemoData) {
         id="prdb-heatmap"
         .data=${demoData.data}
         .labels=${{
-          top: demoData.xLabels,
-          left: demoData.yLabels,
-        }}
+        top: demoData.xLabels,
+        left: demoData.yLabels,
+      }}
         .dendrograms=${{
-          top: demoData.xDendrogram,
-          left: demoData.yDendrogram,
-        }}
+        top: demoData.xDendrogram,
+        left: demoData.yDendrogram,
+      }}
         .colorAnnots=${{
-          top: demoData.xAnnotColors,
-        }}
+        top: demoData.xAnnotColors,
+      }}
         .colorAnnotLabels=${{
-          top: demoData.xAnnotColorLabels,
-        }}
+        top: demoData.xAnnotColorLabels,
+      }}
         .axisLabels=${demoData.axisLabels}
         dendrogram-min-height-fraction="0.02"
         .cellColorScale=${{
-          colors: ["#ffffff", "#f40000"],
-          values: [demoData.minValue, demoData.maxValue]
-        }}
+        colors: ["#ffffff", "#f40000"],
+        values: [demoData.minValue, demoData.maxValue]
+      }}
+        .naColor=${"#eee"}
     ></biowc-heatmap>
     <biowc-heatmap-legend
       id="prdb-legend"

@@ -156,7 +156,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   }
 
   @property({ attribute: false })
-  data: number[][] = [];
+  data: (number | null)[][] = [];
 
   @property({ attribute: false })
   labels: Labels = {};
@@ -175,6 +175,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
   @property({ type: Number, attribute: 'dendrogram-min-height-fraction' })
   dendrogramMinHeightFraction = 0.0;
+
+  @property({ attribute: false })
+  naColor: string | null = null;
 
   get zoomX() {
     return this._zoomX;
@@ -409,19 +412,19 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     const height = Math.max(
       this._nRows * cellHeight +
-        axisLabelH.top +
-        dendrogramH.top +
-        labelsH.top +
-        colorAnnotH.top +
-        colorAnnotH.bottom +
-        labelsH.bottom +
-        dendrogramH.bottom +
-        axisLabelH.bottom,
+      axisLabelH.top +
+      dendrogramH.top +
+      labelsH.top +
+      colorAnnotH.top +
+      colorAnnotH.bottom +
+      labelsH.bottom +
+      dendrogramH.bottom +
+      axisLabelH.bottom,
       legendHeight +
-        axisLabelH.top +
-        dendrogramH.top +
-        labelsH.top +
-        colorAnnotH.top
+      axisLabelH.top +
+      dendrogramH.top +
+      labelsH.top +
+      colorAnnotH.top
     );
 
     const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -450,9 +453,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     const topDendrogramSVG = (
       this._topContainer?.querySelector('biowc-heatmap-dendrogram') as
-        | BiowcHeatmapDendrogram
-        | null
-        | undefined
+      | BiowcHeatmapDendrogram
+      | null
+      | undefined
     )?.exportSVG(dendrogramH.top, cellWidth, cellHeight);
 
     if (topDendrogramSVG && dendrogramH[Side.top]) {
@@ -463,9 +466,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     const topLabelsSVG = (
       this._topContainer?.querySelector('biowc-heatmap-labels') as
-        | BiowcHeatmapLabels
-        | null
-        | undefined
+      | BiowcHeatmapLabels
+      | null
+      | undefined
     )?.exportSVG(labelsH.top, cellWidth, cellHeight, fontSize);
 
     if (topLabelsSVG && labelsH[Side.top]) {
@@ -476,9 +479,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     const topColorAnnotSVG = (
       this._topContainer?.querySelector('biowc-heatmap-color-annot') as
-        | BiowcHeatmapColorAnnot
-        | null
-        | undefined
+      | BiowcHeatmapColorAnnot
+      | null
+      | undefined
     )?.exportSVG(colorAnnotH.top, cellWidth, cellHeight);
 
     if (topColorAnnotSVG && colorAnnotH[Side.top]) {
@@ -510,9 +513,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     const leftDendrogramSVG = (
       this._leftContainer?.querySelector('biowc-heatmap-dendrogram') as
-        | BiowcHeatmapDendrogram
-        | null
-        | undefined
+      | BiowcHeatmapDendrogram
+      | null
+      | undefined
     )?.exportSVG(dendrogramH.left, cellWidth, cellHeight);
 
     if (leftDendrogramSVG && dendrogramH[Side.left]) {
@@ -523,9 +526,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     const leftLabelsSVG = (
       this._leftContainer?.querySelector('biowc-heatmap-labels') as
-        | BiowcHeatmapLabels
-        | null
-        | undefined
+      | BiowcHeatmapLabels
+      | null
+      | undefined
     )?.exportSVG(labelsH.left, cellWidth, cellHeight, fontSize);
 
     if (leftLabelsSVG && labelsH[Side.left]) {
@@ -535,9 +538,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     }
     const leftColorAnnotSVG = (
       this._leftContainer?.querySelector('biowc-heatmap-color-annot') as
-        | BiowcHeatmapColorAnnot
-        | null
-        | undefined
+      | BiowcHeatmapColorAnnot
+      | null
+      | undefined
     )?.exportSVG(colorAnnotH.left, cellWidth, cellHeight);
 
     if (leftColorAnnotSVG && colorAnnotH[Side.left]) {
@@ -566,9 +569,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     const rightColorAnnotSVG = (
       this._rightContainer?.querySelector('biowc-heatmap-color-annot') as
-        | BiowcHeatmapColorAnnot
-        | null
-        | undefined
+      | BiowcHeatmapColorAnnot
+      | null
+      | undefined
     )?.exportSVG(colorAnnotH.right, cellWidth, cellHeight);
 
     if (rightColorAnnotSVG && colorAnnotH[Side.right]) {
@@ -579,9 +582,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     const rightLabelsSVG = (
       this._rightContainer?.querySelector('biowc-heatmap-labels') as
-        | BiowcHeatmapLabels
-        | null
-        | undefined
+      | BiowcHeatmapLabels
+      | null
+      | undefined
     )?.exportSVG(labelsH.right, cellWidth, cellHeight, fontSize);
 
     if (rightLabelsSVG && labelsH[Side.right]) {
@@ -592,9 +595,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     const rightDendrogramSVG = (
       this._rightContainer?.querySelector('biowc-heatmap-dendrogram') as
-        | BiowcHeatmapDendrogram
-        | null
-        | undefined
+      | BiowcHeatmapDendrogram
+      | null
+      | undefined
     )?.exportSVG(dendrogramH.right, cellWidth, cellHeight);
 
     if (rightDendrogramSVG && dendrogramH[Side.right]) {
@@ -617,8 +620,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
     if (rightAxisLabelSVG && axisLabelH[Side.right]) {
       rightAxisLabelSVG.setAttribute(
         'x',
-        `${
-          rightXOffset + colorAnnotH.right + labelsH.right + dendrogramH.right
+        `${rightXOffset + colorAnnotH.right + labelsH.right + dendrogramH.right
         }`
       );
       rightAxisLabelSVG.setAttribute('y', `${rightYOffset}`);
@@ -631,9 +633,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     const bottomColorAnnotSVG = (
       this._bottomContainer?.querySelector('biowc-heatmap-color-annot') as
-        | BiowcHeatmapColorAnnot
-        | null
-        | undefined
+      | BiowcHeatmapColorAnnot
+      | null
+      | undefined
     )?.exportSVG(colorAnnotH.bottom, cellWidth, cellHeight);
 
     if (bottomColorAnnotSVG && colorAnnotH[Side.bottom]) {
@@ -644,9 +646,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     const bottomLabelsSVG = (
       this._bottomContainer?.querySelector('biowc-heatmap-labels') as
-        | BiowcHeatmapLabels
-        | null
-        | undefined
+      | BiowcHeatmapLabels
+      | null
+      | undefined
     )?.exportSVG(labelsH.bottom, cellWidth, cellHeight, fontSize);
 
     if (bottomLabelsSVG && labelsH[Side.bottom]) {
@@ -660,9 +662,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
     const bottomDendrogramSVG = (
       this._bottomContainer?.querySelector('biowc-heatmap-dendrogram') as
-        | BiowcHeatmapDendrogram
-        | null
-        | undefined
+      | BiowcHeatmapDendrogram
+      | null
+      | undefined
     )?.exportSVG(dendrogramH.bottom, cellWidth, cellHeight);
 
     if (bottomDendrogramSVG && dendrogramH[Side.bottom]) {
@@ -686,11 +688,10 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
       bottomAxisLabelSVG.setAttribute('x', `${bottomXOffset}`);
       bottomAxisLabelSVG.setAttribute(
         'y',
-        `${
-          bottomYOffset +
-          colorAnnotH.bottom +
-          labelsH.bottom +
-          dendrogramH.bottom
+        `${bottomYOffset +
+        colorAnnotH.bottom +
+        labelsH.bottom +
+        dendrogramH.bottom
         }`
       );
       svgEl.append(bottomAxisLabelSVG);
@@ -750,13 +751,11 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
             style="font: ${fontSize}px sans-serif;"
             text-anchor="middle"
             dominant-baseline="middle"
-            transform="${
-              isHorizontal
-                ? ''
-                : `rotate(-90) translate(-${svgHeight / 2}, -${
-                    svgHeight / 2 - svgWidth / 2
-                  })`
-            }"
+            transform="${isHorizontal
+          ? ''
+          : `rotate(-90) translate(-${svgHeight / 2}, -${svgHeight / 2 - svgWidth / 2
+          })`
+        }"
           >
             ${this.axisLabels[side]}
           </text>
@@ -777,6 +776,7 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
         <biowc-heatmap-heatmap
           .data=${this.data}
           .cellColorScale=${this.cellColorScale}
+          .naColor=${this.naColor}
           @biowc-heatmap-cell-hover=${this._handleCellHover}
           @mousemove=${this._handleHeatmapMouseMove}
           class="heatmap"
@@ -788,37 +788,35 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
   private _renderSides(): HTMLTemplateResult {
     return html`
       ${Object.values(Side).map(side => {
-        if (!this._hasSide[side]) {
-          return html``;
-        }
+      if (!this._hasSide[side]) {
+        return html``;
+      }
 
-        const horizontal = side === Side.top || side === Side.bottom;
-        const hoverableClass = horizontal ? 'col-hoverable' : 'row-hoverable';
-        const selectableClass = horizontal
-          ? 'col-selectable'
-          : 'row-selectable';
-        const zoomableClass = horizontal ? 'x-zoomable' : 'y-zoomable';
-        const textAlign =
-          side === Side.left || side === Side.bottom
-            ? TextAlign.right
-            : TextAlign.left;
+      const horizontal = side === Side.top || side === Side.bottom;
+      const hoverableClass = horizontal ? 'col-hoverable' : 'row-hoverable';
+      const selectableClass = horizontal
+        ? 'col-selectable'
+        : 'row-selectable';
+      const zoomableClass = horizontal ? 'x-zoomable' : 'y-zoomable';
+      const textAlign =
+        side === Side.left || side === Side.bottom
+          ? TextAlign.right
+          : TextAlign.left;
 
-        return html`
+      return html`
           <biowc-heatmap-zoom-container
             .side=${side}
             class="container ${side}-container"
           >
-            ${
-              this.axisLabels[side]
-                ? html`
+            ${this.axisLabels[side]
+          ? html`
                 <div class="axis-label">
                   ${this.axisLabels[side]}
                 </div>`
-                : html``
-            }
-            ${
-              this._hasSideDendrogram[side]
-                ? html`
+          : html``
+        }
+            ${this._hasSideDendrogram[side]
+          ? html`
                 <biowc-heatmap-dendrogram
                   .dendrogram=${this.dendrograms[side]!}
                   .side=${side}
@@ -830,12 +828,11 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                   @mousemove=${this._handleSideMouseMove(horizontal)}
                   class="dendrogram ${selectableClass} ${hoverableClass} ${zoomableClass}"
                 ></biowc-heatmap-dendrogram>`
-                : html``
-            }
+          : html``
+        }
 
-            ${
-              this._hasSideLabels[side]
-                ? html`
+            ${this._hasSideLabels[side]
+          ? html`
                 <biowc-heatmap-labels
                   .labels=${this.labels[side]}
                   ?horizontal=${horizontal}
@@ -845,12 +842,11 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                   textalign=${textAlign}
                   class="labels ${selectableClass} ${hoverableClass} ${zoomableClass}"
                 ></biowc-heatmap-labels>`
-                : html``
-            }
+          : html``
+        }
 
-            ${
-              this._hasSideColorAnnots[side]
-                ? html`
+            ${this._hasSideColorAnnots[side]
+          ? html`
                 <biowc-heatmap-color-annot
                   .colorAnnots=${this.colorAnnots[side]}
                   .side=${side}
@@ -859,13 +855,13 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
                   @mousemove=${this._handleSideMouseMove(horizontal)}
                   class="color-annot ${selectableClass} ${hoverableClass} ${zoomableClass}"
                 ></biowc-heatmap-color-annot>`
-                : html``
-            }
+          : html``
+        }
 
           </biowc-heatmap-zoom-container>
         </div>
         `;
-      })}
+    })}
     `;
   }
 
@@ -909,9 +905,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
       Object.values(Side).map(side => [
         side,
         this._hasSideLabels[side] ||
-          this._hasSideDendrogram[side] ||
-          this._hasSideColorAnnots[side] ||
-          this._hasSideAxisLabel[side],
+        this._hasSideDendrogram[side] ||
+        this._hasSideColorAnnots[side] ||
+        this._hasSideAxisLabel[side],
       ])
     ) as SideBooleans;
   }
@@ -998,11 +994,9 @@ export class BiowcHeatmap extends ScopedElementsMixin(LitElement) {
 
   private _updateHeatmapZoom() {
     if (this._heatmap) {
-      this._heatmap.style.transform = `scale(${this.zoomX}, ${
-        this.zoomY
-      }) translate(${50 * (1 - 1 / this.zoomX)}%, ${
-        50 * (1 - 1 / this.zoomY)
-      }%)`;
+      this._heatmap.style.transform = `scale(${this.zoomX}, ${this.zoomY
+        }) translate(${50 * (1 - 1 / this.zoomX)}%, ${50 * (1 - 1 / this.zoomY)
+        }%)`;
     }
   }
 

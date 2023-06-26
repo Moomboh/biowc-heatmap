@@ -41,6 +41,10 @@ export class BiowcHeatmapHeatmap extends LitElement {
   @property({ attribute: false })
   selectedCols: Set<number> = new Set();
 
+  @property({ attribute: false })
+  naColor: string | null = null;
+
+
   render(): SVGTemplateResult {
     return svg`
       <svg
@@ -98,8 +102,21 @@ export class BiowcHeatmapHeatmap extends LitElement {
   }
 
   private _renderCell(x: number, y: number, value: number | null): SVGTemplateResult {
-    if (value == null) {
+    if (value == null && this.naColor == null) {
       return svg``;
+    }
+
+    if (value == null) {
+      return svg`
+        <rect
+          x="${x}"
+          y="${y}"
+          width="1"
+          height="1"
+          fill="${this.naColor}"
+          class="cell"
+        />
+      `;
     }
 
     return svg`
